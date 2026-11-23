@@ -7,6 +7,8 @@ interface FreemiumInterstitialModalProps {
   open: boolean;
   secondsTotal?: number;
   projectName: string;
+  actionTitle?: string;
+  actionDescription?: string;
   onComplete: () => void;
   onCancel: () => void;
 }
@@ -15,6 +17,8 @@ export function FreemiumInterstitialModal({
   open,
   secondsTotal = 15,
   projectName,
+  actionTitle,
+  actionDescription,
   onComplete,
   onCancel,
 }: FreemiumInterstitialModalProps) {
@@ -67,10 +71,12 @@ export function FreemiumInterstitialModal({
         </div>
 
         <h3 className="mt-4 text-lg font-bold text-docuflow-navy">
-          Preparando cola de análisis SVM para &ldquo;{projectName}&rdquo;
+          {actionTitle ??
+            `Preparando cola de análisis SVM para "${projectName}"`}
         </h3>
         <p className="mt-1.5 text-sm text-docuflow-slate">
-          Los usuarios del plan gratuito esperan 15 segundos antes de iniciar la ingesta del archivo <code className="rounded bg-docuflow-input px-1 text-docuflow-primary">.zip</code>.
+          {actionDescription ??
+            'Los usuarios del plan gratuito esperan 15 segundos antes de iniciar el procesamiento en DocuFlow AI.'}
         </p>
 
         <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-docuflow-input">

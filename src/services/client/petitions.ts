@@ -1,3 +1,4 @@
+import type { DocumentAuditState } from '@/core/constants/plans';
 import type {
   AuthResponseDTO,
   CreateProjectResponseDTO,
@@ -10,10 +11,13 @@ import type {
   RegisterRequestDTO,
   SaveWebhookRequestDTO,
   SaveWebhookResponseDTO,
+  UpdateDocumentRequestDTO,
+  UpdateDocumentResponseDTO,
 } from '@/core/types';
 import { basicGet } from '@/lib/http/basicGet';
 import {
   basicDelete,
+  basicDownload,
   basicPatch,
   basicPost,
   basicUpload,
@@ -68,6 +72,44 @@ export const projectPetitions = {
     return basicPatch<SaveWebhookResponseDTO, SaveWebhookRequestDTO>(
       `/api/projects/${encodeURIComponent(codigo)}`,
       payload,
+    );
+  },
+};
+
+export const documentPetitions = {
+  updateContent(
+    id: string,
+    contenido_markdown: string,
+  ): Promise<UpdateDocumentResponseDTO> {
+    return basicPatch<UpdateDocumentResponseDTO, UpdateDocumentRequestDTO>(
+      `/api/documents/${encodeURIComponent(id)}`,
+      { contenido_markdown },
+    );
+  },
+
+  validateDocument(
+    id: string,
+    estado_auditoria: DocumentAuditState = 'validado_humano',
+  ): Promise<UpdateDocumentResponseDTO> {
+    return basicPatch<UpdateDocumentResponseDTO, UpdateDocumentRequestDTO>(
+      `/api/documents/${encodeURIComponent(id)}`,
+      { estado_auditoria },
+    );
+  },
+
+  exportMarkdown(id: string, filename: string): Promise<void> {
+    return basicDownload(
+      `/api/documents/${encodeURIComponent(id)}/export`,
+      filename,
+      { params: { format: 'md' } },
+    );
+  },
+
+  exportPdf(id: string, filename: string): Promise<void> {
+    return basicDownload(
+      `/api/documents/${encodeURIComponent(id)}/export`,
+      filename,
+      { params: { format: 'pdf' } },
     );
   },
 };

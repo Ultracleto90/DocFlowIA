@@ -16,3 +16,12 @@ export const updateDocumentSchema = z
   );
 
 export type UpdateDocumentInput = z.infer<typeof updateDocumentSchema>;
+
+export const exportFormatQuerySchema = z.object({
+  format: z.enum(['md', 'pdf'], {
+    required_error: 'Debes indicar format=md o format=pdf.',
+    invalid_type_error: 'Formato inválido. Usa format=md o format=pdf.',
+  }),
+});
+
+export type ExportFormatQueryInput = z.infer<typeof exportFormatQuerySchema>;

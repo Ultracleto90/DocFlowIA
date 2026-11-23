@@ -75,3 +75,12 @@ export interface SaveWebhookRequestDTO {
 export interface SaveWebhookResponseDTO {
   project: ProjectRecord;
 }
+
+export interface UpdateDocumentRequestDTO {
+  contenido_markdown?: string;
+  estado_auditoria?: DocumentAuditState;
+}
+
+export interface UpdateDocumentResponseDTO {
+  document: GeneratedDocumentRecord;
+}
