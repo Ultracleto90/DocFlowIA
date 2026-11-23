@@ -49,7 +49,7 @@ export function LoginForm() {
       const safeTarget =
         nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')
           ? nextParam
-          : '/';
+          : '/dashboard';
 
       router.push(safeTarget);
       router.refresh();

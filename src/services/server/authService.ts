@@ -140,9 +140,9 @@ export async function loginUser(
   return { user: profile, token };
 }
 
-export async function getCurrentUserProfile(
+export async function requireAuthenticatedUser(
   token: string | undefined,
-): Promise<AuthUserProfile> {
+): Promise<UserRecord> {
   if (!token) {
     throw new ServiceError(401, 'No autenticado. Inicia sesión para continuar.');
   }
@@ -157,6 +157,13 @@ export async function getCurrentUserProfile(
     throw new ServiceError(401, 'Usuario no encontrado o cuenta desactivada.');
   }
 
+  return user;
+}
+
+export async function getCurrentUserProfile(
+  token: string | undefined,
+): Promise<AuthUserProfile> {
+  const user = await requireAuthenticatedUser(token);
   return buildUserProfile(user);
 }
 

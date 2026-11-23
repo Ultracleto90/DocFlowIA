@@ -119,4 +119,39 @@ export const projectRepository = {
     const result = await Proyecto.deleteOne({ codigo_proyecto });
     return result.deletedCount > 0;
   },
+
+  async getNextProjectCode(): Promise<string> {
+    const conn = await getWriteConnection();
+    const Proyecto = getProyectoModel(conn);
+    const docs = await Proyecto.find({}, { codigo_proyecto: 1 })
+      .lean<Array<{ codigo_proyecto: string }>>();
+
+    let maxNum = 0;
+    for (const doc of docs) {
+      const match = /^PRJ-(\d+)$/i.exec(doc.codigo_proyecto);
+      if (match) {
+        const parsed = Number.parseInt(match[1], 10);
+        if (Number.isFinite(parsed) && parsed > maxNum) {
+          maxNum = parsed;
+        }
+      }
+    }
+
+    return `PRJ-${String(maxNum + 1).padStart(3, '0')}`;
+  },
+
+  async updateWebhookUrl(
+    codigo_proyecto: string,
+    webhook_url: string,
+  ): Promise<ProjectRecord | null> {
+    const conn = await getWriteConnection();
+    const Proyecto = getProyectoModel(conn);
+    const updated = await Proyecto.findOneAndUpdate(
+      { codigo_proyecto },
+      { $set: { webhook_url } },
+      { new: true },
+    ).lean<ProyectoDoc | null>();
+
+    return updated ? toProjectRecord(updated) : null;
+  },
 };

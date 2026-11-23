@@ -45,7 +45,7 @@ export function RegisterForm() {
     try {
       const response = await authPetitions.register(validation.data);
       setCreatedUser(response.user);
-      router.push('/');
+      router.push('/dashboard');
       router.refresh();
     } catch (err: unknown) {
       if (err instanceof HttpError) {

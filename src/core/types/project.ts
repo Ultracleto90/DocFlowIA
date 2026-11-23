@@ -4,6 +4,7 @@ import type {
   ProcessingState,
   SvmClassification,
 } from '@/core/constants/plans';
+import type { PlanUsageSummary } from './user';
 
 export interface ProjectRecord {
   id: string;
@@ -35,4 +36,42 @@ export interface GeneratedDocumentRecord {
   token_count: number;
   modelo_ia: string;
   contenido_markdown: string;
+}
+
+export interface ProjectIngestionSummary {
+  total_blade_views: number;
+  relevant_views: number;
+  noise_views: number;
+  documents_generated: number;
+}
+
+export interface ProjectListResponseDTO {
+  projects: ProjectRecord[];
+  usage: PlanUsageSummary;
+}
+
+export interface ProjectDetailResponseDTO {
+  project: ProjectRecord;
+  components: FilteredComponentRecord[];
+  documents: GeneratedDocumentRecord[];
+}
+
+export interface CreateProjectResponseDTO {
+  project: ProjectRecord;
+  components: FilteredComponentRecord[];
+  documents: GeneratedDocumentRecord[];
+  summary: ProjectIngestionSummary;
+}
+
+export interface DeleteProjectResponseDTO {
+  message: string;
+  codigo_proyecto: string;
+}
+
+export interface SaveWebhookRequestDTO {
+  webhook_url: string;
+}
+
+export interface SaveWebhookResponseDTO {
+  project: ProjectRecord;
 }
