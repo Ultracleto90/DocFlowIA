@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Next.js build outputs
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Uploaded project archives
+storage/uploads/*.zip
+
+# Logs & OS artifacts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store

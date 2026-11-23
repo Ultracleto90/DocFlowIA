@@ -1,0 +1,37 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/next/Dockerfile
+      target: dev
+    container_name: docuflow_web
+    restart: unless-stopped
+    expose:
+      - "3000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./storage/uploads:/storage/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - docuflow_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: docuflow_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+    networks:
+      - docuflow_network
+
+networks:
+  docuflow_network:
+    external: true
