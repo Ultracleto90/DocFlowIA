@@ -14,7 +14,9 @@ import { ServiceError } from './errors';
 
 const DB_ROLE_WRITE = 'worker_ia_service';
 
-async function buildUserProfile(user: UserRecord): Promise<AuthUserProfile> {
+export async function buildUserProfile(
+  user: UserRecord,
+): Promise<AuthUserProfile> {
   const planDetails = getPlanDefinition(user.plan.nombre);
   const usedThisMonth = await projectRepository.countMonthlyByUser(user.correo);
   const maxProjects = user.plan.max_proyectos_mes;

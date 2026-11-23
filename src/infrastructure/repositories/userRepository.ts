@@ -3,6 +3,7 @@ import type {
   UserPlanEmbedded,
   UserRecord,
   UserWithPasswordRecord,
+  WhiteLabelConfig,
 } from '@/core/types';
 import { getUsuarioModel, type UsuarioDoc } from '@/infrastructure/models/Usuario';
 import { getWriteConnection } from '@/lib/db/mongodb';
@@ -133,5 +134,44 @@ export const userRepository = {
     );
 
     return result.matchedCount > 0;
+  },
+
+  async updateEnterpriseConfig(
+    correo: string,
+    patch: { white_label?: WhiteLabelConfig; api_key?: string },
+  ): Promise<UserRecord | null> {
+    const conn = await getWriteConnection();
+    const Usuario = getUsuarioModel(conn);
+    const updateFields: Record<string, unknown> = {};
+
+    if (patch.white_label !== undefined) {
+      updateFields.white_label = patch.white_label;
+    }
+    if (patch.api_key !== undefined) {
+      updateFields.api_key = patch.api_key;
+    }
+
+    const updated = await Usuario.findOneAndUpdate(
+      { correo: correo.toLowerCase().trim() },
+      { $set: updateFields },
+      { new: true },
+    ).lean<UsuarioDoc | null>();
+
+    return updated ? toUserRecord(updated) : null;
+  },
+
+  async updateTeamMembers(
+    correo: string,
+    team_members: Array<{ correo: string; rol: UserRole; invited_at: Date }>,
+  ): Promise<UserRecord | null> {
+    const conn = await getWriteConnection();
+    const Usuario = getUsuarioModel(conn);
+    const updated = await Usuario.findOneAndUpdate(
+      { correo: correo.toLowerCase().trim() },
+      { $set: { team_members } },
+      { new: true },
+    ).lean<UsuarioDoc | null>();
+
+    return updated ? toUserRecord(updated) : null;
   },
 };

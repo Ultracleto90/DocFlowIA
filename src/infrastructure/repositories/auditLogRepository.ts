@@ -70,4 +70,21 @@ export const auditLogRepository = {
 
     return docs.map(toAuditLogRecord);
   },
+
+  async countStatsReadOnly(): Promise<{
+    total: number;
+    exitosos: number;
+    bloqueados: number;
+  }> {
+    const conn = await getReadOnlyConnection();
+    const LogAuditoria = getLogAuditoriaModel(conn);
+
+    const [total, exitosos, bloqueados] = await Promise.all([
+      LogAuditoria.countDocuments(),
+      LogAuditoria.countDocuments({ resultado: 'EXITOSO' }),
+      LogAuditoria.countDocuments({ resultado: 'BLOQUEADO_UNAUTHORIZED' }),
+    ]);
+
+    return { total, exitosos, bloqueados };
+  },
 };

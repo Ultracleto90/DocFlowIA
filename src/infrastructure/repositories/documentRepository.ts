@@ -60,6 +60,7 @@ export const documentRepository = {
     const DocumentoGenerado = getDocumentoGeneradoModel(conn);
     const docs = await DocumentoGenerado.find({
       token_count: { $gt: minTokens },
+      estado_auditoria: 'borrador_ia',
     })
       .sort({ token_count: -1 })
       .lean<DocumentoGeneradoDoc[]>();
