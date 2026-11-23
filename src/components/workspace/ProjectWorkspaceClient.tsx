@@ -1,5 +1,13 @@
 'use client';
 
+import {
+  ArrowLeft,
+  FileText,
+  Filter,
+  FolderArchive,
+  Lock,
+  Webhook,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -100,19 +108,32 @@ export function ProjectWorkspaceClient({
           </p>
           <Link
             href="/dashboard"
-            className="mt-4 inline-block rounded-xl bg-docuflow-primary px-4 py-2 text-xs font-semibold text-white hover:bg-docuflow-action"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-docuflow-primary px-4 py-2 text-xs font-semibold text-white hover:bg-docuflow-action"
           >
-            Volver al Dashboard
+            <ArrowLeft className="h-4 w-4" />
+            <span>Volver al Dashboard</span>
           </Link>
         </div>
       </div>
     );
   }
 
-  const tabs: Array<{ id: WorkspaceTab; label: string }> = [
-    { id: 'docs', label: 'Documentación (Split-View)' },
-    { id: 'svm', label: `Filtro SVM (${components.length})` },
-    { id: 'integration', label: 'Integración y Auditoría' },
+  const tabs = [
+    {
+      id: 'docs' as const,
+      label: 'Documentación (Split-View)',
+      icon: FileText,
+    },
+    {
+      id: 'svm' as const,
+      label: `Filtro SVM (${components.length})`,
+      icon: Filter,
+    },
+    {
+      id: 'integration' as const,
+      label: 'Integración y Auditoría',
+      icon: Webhook,
+    },
   ];
 
   return (
@@ -134,16 +155,19 @@ export function ProjectWorkspaceClient({
           <h1 className="mt-2 text-xl font-bold text-docuflow-navy">
             {project.nombre_proyecto}
           </h1>
-          <p className="text-xs text-docuflow-slate">
-            Archivo fuente: <span className="font-mono">{project.archivo_zip}</span>
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-docuflow-slate">
+            <FolderArchive className="h-3.5 w-3.5 text-docuflow-primary" />
+            <span>Archivo fuente:</span>
+            <span className="font-mono">{project.archivo_zip}</span>
           </p>
         </div>
 
         <Link
           href="/dashboard"
-          className="shrink-0 rounded-xl border border-docuflow-input bg-docuflow-bg/50 px-4 py-2 text-xs font-semibold text-docuflow-navy hover:bg-docuflow-input"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-docuflow-input bg-docuflow-bg/50 px-4 py-2 text-xs font-semibold text-docuflow-navy hover:bg-docuflow-input"
         >
-          ← Volver al Dashboard
+          <ArrowLeft className="h-4 w-4" />
+          <span>Volver al Dashboard</span>
         </Link>
       </div>
 
@@ -153,6 +177,7 @@ export function ProjectWorkspaceClient({
           const isActive = activeTab === tab.id;
           const isLockedIntegration =
             tab.id === 'integration' && !user.plan_details.features.webhooks;
+          const Icon = tab.icon;
 
           return (
             <button
@@ -165,7 +190,11 @@ export function ProjectWorkspaceClient({
                   : 'bg-docuflow-surface text-docuflow-slate hover:text-docuflow-navy'
               }`}
             >
-              {isLockedIntegration ? <span aria-hidden="true">🔒</span> : null}
+              {isLockedIntegration ? (
+                <Lock className="h-3.5 w-3.5 text-docuflow-orange" />
+              ) : (
+                <Icon className="h-3.5 w-3.5" />
+              )}
               <span>{tab.label}</span>
             </button>
           );

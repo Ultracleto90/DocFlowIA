@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'DocuFlow AI — Documentación Técnica Automatizada para Laravel',
+  title: 'DocuFlow AI | Documentación Técnica Automatizada para Laravel',
   description:
     'Plataforma SaaS Human-in-the-loop para generación y auditoría de documentación técnica en proyectos Laravel (.blade.php).',
 };

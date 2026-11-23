@@ -1,5 +1,17 @@
 'use client';
 
+import {
+  AlertCircle,
+  CheckCircle2,
+  CircleDot,
+  Code2,
+  Eye,
+  FileDown,
+  FileText,
+  Lock,
+  Save,
+  Sparkles,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -199,7 +211,11 @@ export function DocumentSplitEditor({
                   : 'border-docuflow-input bg-docuflow-surface text-docuflow-navy hover:bg-docuflow-input'
               }`}
             >
-              {!unlocked ? <span aria-hidden="true">🔒</span> : null}
+              {!unlocked ? (
+                <Lock className="h-3.5 w-3.5 text-docuflow-orange" />
+              ) : (
+                <FileText className="h-3.5 w-3.5" />
+              )}
               <span>{tipo}</span>
               {matchingDoc ? (
                 <span
@@ -221,6 +237,9 @@ export function DocumentSplitEditor({
 
       {!isSelectedUnlocked ? (
         <div className="rounded-2xl border border-docuflow-violet/30 bg-docuflow-surface p-8 text-center shadow-sm">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-docuflow-violet/10 text-docuflow-violet">
+            <Lock className="h-5 w-5" />
+          </div>
           <p className="text-xs font-bold uppercase tracking-wide text-docuflow-violet">
             Entregable bloqueado en Plan {user.plan.nombre}
           </p>
@@ -232,9 +251,10 @@ export function DocumentSplitEditor({
           </p>
           <Link
             href="/billing"
-            className="mt-5 inline-block rounded-xl bg-docuflow-violet px-5 py-2.5 text-xs font-semibold text-white hover:opacity-90"
+            className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-docuflow-violet px-5 py-2.5 text-xs font-semibold text-white hover:opacity-90"
           >
-            Desbloquear entregables en Planes
+            <Sparkles className="h-4 w-4" />
+            <span>Desbloquear entregables en Planes</span>
           </Link>
         </div>
       ) : !activeDoc ? (
@@ -247,23 +267,26 @@ export function DocumentSplitEditor({
           <div className="flex flex-col justify-between gap-4 rounded-2xl border border-docuflow-input bg-docuflow-surface p-4 shadow-sm xl:flex-row xl:items-center">
             <div className="flex flex-wrap items-center gap-2.5">
               <span
-                className={`rounded-full px-3 py-1 text-xs font-bold ${
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
                   activeDoc.estado_auditoria === 'validado_humano'
                     ? 'bg-docuflow-cyan/20 text-docuflow-navy'
                     : 'bg-docuflow-orange/15 text-docuflow-orange'
                 }`}
               >
-                {activeDoc.estado_auditoria}
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>{activeDoc.estado_auditoria}</span>
               </span>
-              <span className="rounded-full bg-docuflow-violet/15 px-3 py-1 text-xs font-semibold text-docuflow-violet">
-                {activeDoc.token_count.toLocaleString()} tokens
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-docuflow-violet/15 px-3 py-1 text-xs font-semibold text-docuflow-violet">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>{activeDoc.token_count.toLocaleString()} tokens</span>
               </span>
               <span className="rounded-full bg-docuflow-input px-3 py-1 text-xs font-medium text-docuflow-slate">
                 {activeDoc.modelo_ia}
               </span>
               {hasUnsavedChanges ? (
-                <span className="text-xs font-semibold text-docuflow-orange">
-                  • Cambios sin guardar
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-docuflow-orange">
+                  <CircleDot className="h-3.5 w-3.5" />
+                  <span>Cambios sin guardar</span>
                 </span>
               ) : null}
             </div>
@@ -273,35 +296,40 @@ export function DocumentSplitEditor({
                 type="button"
                 onClick={() => void handleSaveChanges()}
                 disabled={isSaving || !hasUnsavedChanges}
-                className="rounded-xl bg-docuflow-primary px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-docuflow-action disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-docuflow-primary px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-docuflow-action disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isSaving ? 'Guardando...' : 'Guardar cambios'}
+                <Save className="h-3.5 w-3.5" />
+                <span>{isSaving ? 'Guardando...' : 'Guardar cambios'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => void handleToggleValidation()}
                 disabled={isValidating}
-                className={`rounded-xl px-4 py-2 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-colors disabled:opacity-50 ${
                   activeDoc.estado_auditoria === 'validado_humano'
                     ? 'border border-docuflow-cyan bg-docuflow-cyan/15 text-docuflow-navy'
                     : 'bg-docuflow-cyan text-docuflow-navy hover:opacity-90'
                 }`}
               >
-                {isValidating
-                  ? 'Actualizando...'
-                  : activeDoc.estado_auditoria === 'validado_humano'
-                    ? '✓ Validado (volver a borrador)'
-                    : 'Marcar como Validado (validado_humano)'}
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>
+                  {isValidating
+                    ? 'Actualizando...'
+                    : activeDoc.estado_auditoria === 'validado_humano'
+                      ? 'Validado (volver a borrador)'
+                      : 'Marcar como Validado (validado_humano)'}
+                </span>
               </button>
 
               <button
                 type="button"
                 onClick={handleExportMarkdownClick}
                 disabled={isExporting}
-                className="rounded-xl border border-docuflow-input bg-docuflow-bg/60 px-3.5 py-2 text-xs font-semibold text-docuflow-navy hover:bg-docuflow-input disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-docuflow-input bg-docuflow-bg/60 px-3.5 py-2 text-xs font-semibold text-docuflow-navy hover:bg-docuflow-input disabled:opacity-50"
               >
-                Exportar .md
+                <FileDown className="h-3.5 w-3.5 text-docuflow-primary" />
+                <span>Exportar .md</span>
               </button>
 
               {user.plan_details.pdf_habilitado ? (
@@ -309,9 +337,10 @@ export function DocumentSplitEditor({
                   type="button"
                   onClick={() => void handleExportPdfClick()}
                   disabled={isExporting}
-                  className="rounded-xl bg-docuflow-violet px-3.5 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-docuflow-violet px-3.5 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
                 >
-                  Exportar .pdf
+                  <FileDown className="h-3.5 w-3.5" />
+                  <span>Exportar .pdf</span>
                 </button>
               ) : (
                 <Link
@@ -319,24 +348,27 @@ export function DocumentSplitEditor({
                   title="Exportación PDF disponible desde Plan Pro ($399 MXN/mes)"
                   className="inline-flex items-center gap-1.5 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-3.5 py-2 text-xs font-semibold text-docuflow-orange hover:bg-docuflow-orange/20"
                 >
-                  <span aria-hidden="true">🔒</span> Exportar .pdf (Pro)
+                  <Lock className="h-3.5 w-3.5" />
+                  <span>Exportar .pdf (Pro)</span>
                 </Link>
               )}
             </div>
           </div>
 
           {statusMessage ? (
-            <div className="rounded-xl border border-docuflow-cyan/40 bg-docuflow-surface px-4 py-3 text-xs font-semibold text-docuflow-navy">
-              {statusMessage}
+            <div className="flex items-center gap-2 rounded-xl border border-docuflow-cyan/40 bg-docuflow-surface px-4 py-3 text-xs font-semibold text-docuflow-navy">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-docuflow-cyan" />
+              <span>{statusMessage}</span>
             </div>
           ) : null}
 
           {errorMessage ? (
             <div
               role="alert"
-              className="rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-3 text-xs font-semibold text-docuflow-navy"
+              className="flex items-center gap-2 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-3 text-xs font-semibold text-docuflow-navy"
             >
-              {errorMessage}
+              <AlertCircle className="h-4 w-4 shrink-0 text-docuflow-orange" />
+              <span>{errorMessage}</span>
             </div>
           ) : null}
 
@@ -344,8 +376,9 @@ export function DocumentSplitEditor({
           <div className="grid gap-5 lg:grid-cols-2">
             <div className="flex flex-col overflow-hidden rounded-2xl border border-docuflow-input bg-docuflow-surface shadow-sm">
               <div className="flex items-center justify-between border-b border-docuflow-input bg-docuflow-bg/40 px-4 py-2.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-docuflow-slate">
-                  Editor Markdown (Human-in-the-loop)
+                <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-docuflow-slate">
+                  <Code2 className="h-4 w-4 text-docuflow-primary" />
+                  <span>Editor Markdown (Human-in-the-loop)</span>
                 </span>
                 <span className="text-[11px] text-docuflow-slate">
                   {draftMarkdown.length} caracteres
@@ -361,8 +394,9 @@ export function DocumentSplitEditor({
 
             <div className="flex flex-col overflow-hidden rounded-2xl border border-docuflow-input bg-docuflow-surface shadow-sm">
               <div className="flex items-center justify-between border-b border-docuflow-input bg-docuflow-bg/40 px-4 py-2.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-docuflow-slate">
-                  Vista Previa Renderizada
+                <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-docuflow-slate">
+                  <Eye className="h-4 w-4 text-docuflow-cyan" />
+                  <span>Vista Previa Renderizada</span>
                 </span>
                 <span className="text-[11px] font-semibold text-docuflow-primary">
                   GFM Live

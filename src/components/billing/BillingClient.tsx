@@ -1,5 +1,18 @@
 'use client';
 
+import {
+  AlertCircle,
+  Check,
+  CheckCircle2,
+  Crown,
+  KeyRound,
+  Lock,
+  Palette,
+  Sparkles,
+  Trash2,
+  UserPlus,
+  Users,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
@@ -27,13 +40,11 @@ export function BillingClient() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Team form state
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<UserRole>('Revisor QA');
   const [isInviting, setIsInviting] = useState(false);
   const [removingEmail, setRemovingEmail] = useState<string | null>(null);
 
-  // Enterprise White-Label & API Key state
   const [wlEnabled, setWlEnabled] = useState(false);
   const [wlBrandName, setWlBrandName] = useState('');
   const [wlLogoUrl, setWlLogoUrl] = useState('');
@@ -237,8 +248,9 @@ export function BillingClient() {
   return (
     <AppShell user={user}>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-docuflow-navy">
-          Planes, Suscripción, Equipo y Marca Blanca
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-docuflow-navy">
+          <Crown className="h-5 w-5 text-docuflow-violet" />
+          <span>Planes, Suscripción, Equipo y Marca Blanca</span>
         </h1>
         <p className="mt-1 text-sm text-docuflow-slate">
           Cambia de nivel en vivo para probar cuotas, desbloqueo de PDF/IEEE 830, eliminación de anuncios, RBAC y White-Label.
@@ -246,17 +258,19 @@ export function BillingClient() {
       </div>
 
       {statusMessage ? (
-        <div className="mb-5 rounded-2xl border border-docuflow-cyan/40 bg-docuflow-surface px-5 py-3.5 text-sm font-semibold text-docuflow-navy shadow-sm">
-          {statusMessage}
+        <div className="mb-5 flex items-center gap-2 rounded-2xl border border-docuflow-cyan/40 bg-docuflow-surface px-5 py-3.5 text-sm font-semibold text-docuflow-navy shadow-sm">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-docuflow-cyan" />
+          <span>{statusMessage}</span>
         </div>
       ) : null}
 
       {errorMessage ? (
         <div
           role="alert"
-          className="mb-5 rounded-2xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-5 py-3.5 text-sm font-semibold text-docuflow-navy"
+          className="mb-5 flex items-center gap-2 rounded-2xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-5 py-3.5 text-sm font-semibold text-docuflow-navy"
         >
-          {errorMessage}
+          <AlertCircle className="h-4 w-4 shrink-0 text-docuflow-orange" />
+          <span>{errorMessage}</span>
         </div>
       ) : null}
 
@@ -278,13 +292,14 @@ export function BillingClient() {
               <div>
                 <div className="flex items-center justify-between">
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
                       plan.nombre === 'Freemium'
                         ? 'bg-docuflow-orange/15 text-docuflow-orange'
                         : 'bg-docuflow-violet/15 text-docuflow-violet'
                     }`}
                   >
-                    {plan.nivel_ia}
+                    <Sparkles className="h-3 w-3" />
+                    <span>{plan.nivel_ia}</span>
                   </span>
                   {isCurrent ? (
                     <span className="rounded-full bg-docuflow-cyan/20 px-2.5 py-0.5 text-[11px] font-bold text-docuflow-navy">
@@ -307,21 +322,39 @@ export function BillingClient() {
                   </span>
                 </div>
 
-                <ul className="mt-5 space-y-2 border-t border-docuflow-input pt-4 text-xs text-docuflow-navy">
-                  <li>• {plan.max_proyectos_mes} proyectos / mes</li>
-                  <li>
-                    • Máx {plan.max_zip_mb} MB · {plan.max_vistas_blade} vistas{' '}
-                    <code>.blade.php</code>
+                <ul className="mt-5 space-y-2.5 border-t border-docuflow-input pt-4 text-xs text-docuflow-navy">
+                  <li className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-docuflow-cyan" />
+                    <span>{plan.max_proyectos_mes} proyectos / mes</span>
                   </li>
-                  <li>• IA: {plan.modelo_ia}</li>
-                  <li>• Entregables: {plan.entregables.length} de 3 normas</li>
-                  <li>
-                    • Exportación:{' '}
-                    {plan.pdf_habilitado
-                      ? '.md y .pdf limpios'
-                      : 'Solo .md con firma'}
+                  <li className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-docuflow-cyan" />
+                    <span>
+                      Máx {plan.max_zip_mb} MB | {plan.max_vistas_blade} vistas{' '}
+                      <code>.blade.php</code>
+                    </span>
                   </li>
-                  <li>• {plan.extras_resumen}</li>
+                  <li className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-docuflow-cyan" />
+                    <span>IA: {plan.modelo_ia}</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-docuflow-cyan" />
+                    <span>Entregables: {plan.entregables.length} de 3 normas</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-docuflow-cyan" />
+                    <span>
+                      Exportación:{' '}
+                      {plan.pdf_habilitado
+                        ? '.md y .pdf limpios'
+                        : 'Solo .md con firma'}
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-docuflow-cyan" />
+                    <span>{plan.extras_resumen}</span>
+                  </li>
                 </ul>
               </div>
 
@@ -352,8 +385,9 @@ export function BillingClient() {
         <section className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-docuflow-navy">
-                Gestión de Equipo RBAC
+              <h3 className="flex items-center gap-2 text-base font-bold text-docuflow-navy">
+                <Users className="h-4 w-4 text-docuflow-primary" />
+                <span>Gestión de Equipo RBAC</span>
               </h3>
               <p className="mt-1 text-xs text-docuflow-slate">
                 {user.plan.nombre === 'Freemium'
@@ -395,9 +429,10 @@ export function BillingClient() {
               <button
                 type="submit"
                 disabled={isInviting}
-                className="rounded-xl bg-docuflow-primary px-4 py-2 text-xs font-semibold text-white hover:bg-docuflow-action disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-docuflow-primary px-4 py-2 text-xs font-semibold text-white hover:bg-docuflow-action disabled:opacity-60"
               >
-                {isInviting ? 'Invitando...' : 'Invitar al equipo'}
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>{isInviting ? 'Invitando...' : 'Invitar al equipo'}</span>
               </button>
             </form>
           ) : (
@@ -429,9 +464,12 @@ export function BillingClient() {
                     type="button"
                     onClick={() => void handleRemoveMember(member.correo)}
                     disabled={removingEmail === member.correo}
-                    className="rounded-lg border border-docuflow-input px-2.5 py-1 text-[11px] font-semibold text-docuflow-slate hover:border-docuflow-orange hover:text-docuflow-orange"
+                    className="inline-flex items-center gap-1 rounded-lg border border-docuflow-input px-2.5 py-1 text-[11px] font-semibold text-docuflow-slate hover:border-docuflow-orange hover:text-docuflow-orange"
                   >
-                    {removingEmail === member.correo ? 'Quitando...' : 'Remover'}
+                    <Trash2 className="h-3 w-3" />
+                    <span>
+                      {removingEmail === member.correo ? 'Quitando...' : 'Remover'}
+                    </span>
                   </button>
                 </div>
               ))
@@ -443,8 +481,9 @@ export function BillingClient() {
         <section className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-docuflow-navy">
-                Marca Blanca (White-Label) & API Key REST
+              <h3 className="flex items-center gap-2 text-base font-bold text-docuflow-navy">
+                <Palette className="h-4 w-4 text-docuflow-violet" />
+                <span>Marca Blanca (White-Label) &amp; API Key REST</span>
               </h3>
               <p className="mt-1 text-xs text-docuflow-slate">
                 Personaliza el Sidebar/Navbar y los encabezados PDF/MD exportados (solo Enterprise).
@@ -456,13 +495,16 @@ export function BillingClient() {
           </div>
 
           {!isEnterprise ? (
-            <div className="mt-5 rounded-xl border border-docuflow-violet/30 bg-docuflow-violet/5 p-5 text-xs text-docuflow-navy">
-              <p className="font-semibold">
-                🔒 Exclusivo de Plan Enterprise ($3,999 MXN/mes)
-              </p>
-              <p className="mt-1 text-docuflow-slate">
-                Cambia al plan Enterprise arriba para activar White-Label en vivo y generar tu API Key REST.
-              </p>
+            <div className="mt-5 flex items-start gap-3 rounded-xl border border-docuflow-violet/30 bg-docuflow-violet/5 p-5 text-xs text-docuflow-navy">
+              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-docuflow-violet" />
+              <div>
+                <p className="font-semibold">
+                  Exclusivo de Plan Enterprise ($3,999 MXN/mes)
+                </p>
+                <p className="mt-1 text-docuflow-slate">
+                  Cambia al plan Enterprise arriba para activar White-Label en vivo y generar tu API Key REST.
+                </p>
+              </div>
             </div>
           ) : (
             <div className="mt-5 space-y-6">
@@ -526,13 +568,14 @@ export function BillingClient() {
               <div className="border-t border-docuflow-input pt-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-bold text-docuflow-navy">
-                      API Key REST Enterprise
+                    <p className="flex items-center gap-1.5 text-xs font-bold text-docuflow-navy">
+                      <KeyRound className="h-3.5 w-3.5 text-docuflow-violet" />
+                      <span>API Key REST Enterprise</span>
                     </p>
                     <p className="mt-0.5 font-mono text-[11px] text-docuflow-slate">
                       {revealedApiKey ??
                         (user.api_key
-                          ? `${user.api_key.slice(0, 14)}••••••••••••••••`
+                          ? `${user.api_key.slice(0, 14)}****************`
                           : 'Aún no generada')}
                     </p>
                   </div>
@@ -540,13 +583,16 @@ export function BillingClient() {
                     type="button"
                     onClick={() => void handleRotateApiKey()}
                     disabled={isRotatingKey}
-                    className="rounded-xl bg-docuflow-violet px-4 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-docuflow-violet px-4 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60"
                   >
-                    {isRotatingKey
-                      ? 'Generando...'
-                      : user.api_key
-                        ? 'Rotar API Key'
-                        : 'Generar API Key'}
+                    <KeyRound className="h-3.5 w-3.5" />
+                    <span>
+                      {isRotatingKey
+                        ? 'Generando...'
+                        : user.api_key
+                          ? 'Rotar API Key'
+                          : 'Generar API Key'}
+                    </span>
                   </button>
                 </div>
               </div>

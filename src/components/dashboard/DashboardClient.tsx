@@ -1,5 +1,17 @@
 'use client';
 
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  ExternalLink,
+  FolderArchive,
+  Gauge,
+  HardDrive,
+  Plus,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -127,8 +139,11 @@ export function DashboardClient() {
       {user.plan_details.tiene_anuncios ? <FreemiumAdBanner /> : null}
 
       {toastMessage ? (
-        <div className="mb-6 flex items-center justify-between rounded-2xl border border-docuflow-cyan/40 bg-docuflow-surface px-5 py-3.5 text-sm text-docuflow-navy shadow-sm">
-          <span>{toastMessage}</span>
+        <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-docuflow-cyan/40 bg-docuflow-surface px-5 py-3.5 text-sm text-docuflow-navy shadow-sm">
+          <span className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-docuflow-cyan" />
+            <span>{toastMessage}</span>
+          </span>
           <button
             type="button"
             onClick={() => setToastMessage(null)}
@@ -142,9 +157,10 @@ export function DashboardClient() {
       {errorMessage ? (
         <div
           role="alert"
-          className="mb-6 rounded-2xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-5 py-3.5 text-sm text-docuflow-navy"
+          className="mb-6 flex items-center gap-2 rounded-2xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-5 py-3.5 text-sm text-docuflow-navy"
         >
-          {errorMessage}
+          <AlertCircle className="h-4 w-4 shrink-0 text-docuflow-orange" />
+          <span>{errorMessage}</span>
         </div>
       ) : null}
 
@@ -162,9 +178,10 @@ export function DashboardClient() {
         <button
           type="button"
           onClick={() => setIsUploadOpen(true)}
-          className="rounded-xl bg-docuflow-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-docuflow-action"
+          className="inline-flex items-center gap-2 rounded-xl bg-docuflow-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-docuflow-action"
         >
-          + Nuevo Proyecto Laravel (.zip)
+          <Plus className="h-4 w-4" />
+          <span>Nuevo Proyecto Laravel (.zip)</span>
         </button>
       </div>
 
@@ -172,7 +189,10 @@ export function DashboardClient() {
       <div className="mb-8 grid gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-semibold text-docuflow-slate">
-            <span>Cuota Mensual ({user.plan.nombre})</span>
+            <span className="flex items-center gap-1.5">
+              <Gauge className="h-4 w-4 text-docuflow-cyan" />
+              Cuota Mensual ({user.plan.nombre})
+            </span>
             <span className="text-docuflow-navy">
               {activeUsage.proyectos_mes_actual} / {activeUsage.max_proyectos_mes}
             </span>
@@ -191,7 +211,8 @@ export function DashboardClient() {
         </div>
 
         <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
-          <p className="text-xs font-semibold text-docuflow-slate">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate">
+            <Sparkles className="h-4 w-4 text-docuflow-violet" />
             Inteligencia Activa ({user.plan_details.nivel_ia})
           </p>
           <p className="mt-2 text-base font-bold text-docuflow-violet">
@@ -203,11 +224,12 @@ export function DashboardClient() {
         </div>
 
         <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
-          <p className="text-xs font-semibold text-docuflow-slate">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate">
+            <HardDrive className="h-4 w-4 text-docuflow-primary" />
             Capacidad de Ingesta y Almacenamiento
           </p>
           <p className="mt-2 text-base font-bold text-docuflow-navy">
-            {user.plan_details.max_zip_mb} MB / .zip · {user.plan_details.max_vistas_blade} vistas
+            {user.plan_details.max_zip_mb} MB / .zip | {user.plan_details.max_vistas_blade} vistas
           </p>
           <p className="mt-1 text-xs text-docuflow-slate">
             {user.plan_details.almacenamiento_gb} GB asignados ({user.plan_details.pdf_habilitado ? 'MD + PDF limpio' : 'Solo .md con firma'})
@@ -217,12 +239,17 @@ export function DashboardClient() {
 
       {/* Projects Table */}
       <section className="overflow-hidden rounded-2xl border border-docuflow-input bg-docuflow-surface shadow-sm">
-        <div className="flex items-center justify-between border-b border-docuflow-input px-6 py-4">
-          <h2 className="text-base font-bold text-docuflow-navy">
-            Repositorio de Proyectos ({projects.length})
+        <div className="flex flex-col justify-between gap-2 border-b border-docuflow-input px-6 py-4 sm:flex-row sm:items-center">
+          <h2 className="flex items-center gap-2 text-base font-bold text-docuflow-navy">
+            <FolderArchive className="h-4 w-4 text-docuflow-primary" />
+            <span>Repositorio de Proyectos ({projects.length})</span>
           </h2>
-          <span className="text-xs text-docuflow-slate">
-            Regla 3 clics: Subir → Abrir → Auditar/Exportar
+          <span className="inline-flex items-center gap-1.5 text-xs text-docuflow-slate">
+            <span>Regla 3 clics: Subir</span>
+            <ArrowRight className="h-3.5 w-3.5 text-docuflow-cyan" />
+            <span>Abrir</span>
+            <ArrowRight className="h-3.5 w-3.5 text-docuflow-cyan" />
+            <span>Auditar/Exportar</span>
           </span>
         </div>
 
@@ -232,7 +259,7 @@ export function DashboardClient() {
               Aún no tienes proyectos registrados
             </p>
             <p className="mt-1 text-xs text-docuflow-slate">
-              Haz clic en &ldquo;+ Nuevo Proyecto Laravel (.zip)&rdquo; para analizar tus vistas Blade.
+              Haz clic en &ldquo;Nuevo Proyecto Laravel (.zip)&rdquo; para analizar tus vistas Blade.
             </p>
           </div>
         ) : (
@@ -279,9 +306,10 @@ export function DashboardClient() {
                         <div className="inline-flex items-center gap-2">
                           <Link
                             href={`/projects/${project.codigo_proyecto}`}
-                            className="rounded-lg bg-docuflow-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-docuflow-action"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-docuflow-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-docuflow-action"
                           >
-                            Abrir Workspace
+                            <span>Abrir Workspace</span>
+                            <ExternalLink className="h-3.5 w-3.5" />
                           </Link>
                           <button
                             type="button"
@@ -289,11 +317,14 @@ export function DashboardClient() {
                               void handleDeleteProject(project.codigo_proyecto)
                             }
                             disabled={deletingCode === project.codigo_proyecto}
-                            className="rounded-lg border border-docuflow-input px-3 py-1.5 text-xs font-semibold text-docuflow-slate hover:border-docuflow-orange hover:text-docuflow-orange disabled:opacity-50"
+                            className="inline-flex items-center gap-1 rounded-lg border border-docuflow-input px-3 py-1.5 text-xs font-semibold text-docuflow-slate hover:border-docuflow-orange hover:text-docuflow-orange disabled:opacity-50"
                           >
-                            {deletingCode === project.codigo_proyecto
-                              ? 'Eliminando...'
-                              : 'Eliminar'}
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>
+                              {deletingCode === project.codigo_proyecto
+                                ? 'Eliminando...'
+                                : 'Eliminar'}
+                            </span>
                           </button>
                         </div>
                       </td>

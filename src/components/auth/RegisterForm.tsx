@@ -1,5 +1,14 @@
 'use client';
 
+import {
+  AlertCircle,
+  CheckCircle2,
+  Lock,
+  Mail,
+  Sparkles,
+  User,
+  UserPlus,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
@@ -62,8 +71,8 @@ export function RegisterForm() {
     <div className="w-full max-w-md rounded-2xl border border-docuflow-input bg-docuflow-surface p-8 shadow-sm">
       <div className="mb-6">
         <span className="inline-flex items-center gap-2 rounded-full bg-docuflow-violet/10 px-3 py-1 text-xs font-semibold text-docuflow-violet">
-          <span className="h-2 w-2 rounded-full bg-docuflow-violet" />
-          Plan Freemium Explorer · $0 MXN
+          <Sparkles className="h-3.5 w-3.5" />
+          <span>Plan Freemium Explorer | $0 MXN</span>
         </span>
         <h1 className="mt-3 text-2xl font-bold text-docuflow-navy">
           Crear cuenta en DocuFlow AI
@@ -76,19 +85,23 @@ export function RegisterForm() {
       {serverError ? (
         <div
           role="alert"
-          className="mb-4 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-3 text-sm text-docuflow-navy"
+          className="mb-4 flex items-center gap-2 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-3 text-sm text-docuflow-navy"
         >
-          {serverError}
+          <AlertCircle className="h-4 w-4 shrink-0 text-docuflow-orange" />
+          <span>{serverError}</span>
         </div>
       ) : null}
 
       {createdUser ? (
         <div
           role="status"
-          className="mb-4 rounded-xl border border-docuflow-cyan/40 bg-docuflow-cyan/10 px-4 py-3 text-sm text-docuflow-navy"
+          className="mb-4 flex items-center gap-2 rounded-xl border border-docuflow-cyan/40 bg-docuflow-cyan/10 px-4 py-3 text-sm text-docuflow-navy"
         >
-          Cuenta creada para <strong>{createdUser.nombre}</strong> (Plan{' '}
-          {createdUser.plan.nombre}).
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-docuflow-cyan" />
+          <span>
+            Cuenta creada para <strong>{createdUser.nombre}</strong> (Plan{' '}
+            {createdUser.plan.nombre}).
+          </span>
         </div>
       ) : null}
 
@@ -96,9 +109,10 @@ export function RegisterForm() {
         <div>
           <label
             htmlFor="register-nombre"
-            className="block text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
+            className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
           >
-            Nombre completo
+            <User className="h-3.5 w-3.5 text-docuflow-primary" />
+            <span>Nombre completo</span>
           </label>
           <input
             id="register-nombre"
@@ -119,9 +133,10 @@ export function RegisterForm() {
         <div>
           <label
             htmlFor="register-correo"
-            className="block text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
+            className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
           >
-            Correo electrónico
+            <Mail className="h-3.5 w-3.5 text-docuflow-primary" />
+            <span>Correo electrónico</span>
           </label>
           <input
             id="register-correo"
@@ -142,9 +157,10 @@ export function RegisterForm() {
         <div>
           <label
             htmlFor="register-password"
-            className="block text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
+            className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
           >
-            Contraseña
+            <Lock className="h-3.5 w-3.5 text-docuflow-primary" />
+            <span>Contraseña</span>
           </label>
           <input
             id="register-password"
@@ -165,9 +181,10 @@ export function RegisterForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-xl bg-docuflow-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-docuflow-action disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-docuflow-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-docuflow-action disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? 'Creando cuenta...' : 'Registrarme gratis'}
+          <UserPlus className="h-4 w-4" />
+          <span>{isSubmitting ? 'Creando cuenta...' : 'Registrarme gratis'}</span>
         </button>
       </form>
 

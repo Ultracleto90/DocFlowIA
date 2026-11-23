@@ -1,5 +1,13 @@
 'use client';
 
+import {
+  AlertCircle,
+  FileArchive,
+  Loader2,
+  Sparkles,
+  UploadCloud,
+  X,
+} from 'lucide-react';
 import { useCallback, useRef, useState, type DragEvent, type FormEvent } from 'react';
 import { createProjectMetaSchema } from '@/core/schemas';
 import type { AuthUserProfile, CreateProjectResponseDTO } from '@/core/types';
@@ -135,8 +143,9 @@ export function UploadProjectModal({
         <div className="w-full max-w-xl rounded-2xl border border-docuflow-input bg-docuflow-surface p-6 shadow-xl">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-xl font-bold text-docuflow-navy">
-                Nuevo Proyecto Laravel (.zip)
+              <h2 className="flex items-center gap-2 text-xl font-bold text-docuflow-navy">
+                <FileArchive className="h-5 w-5 text-docuflow-primary" />
+                <span>Nuevo Proyecto Laravel (.zip)</span>
               </h2>
               <p className="mt-1 text-xs text-docuflow-slate">
                 Límites de tu plan <strong>{user.plan.nombre}</strong>: hasta{' '}
@@ -148,18 +157,20 @@ export function UploadProjectModal({
               type="button"
               onClick={onClose}
               disabled={isUploading}
-              className="rounded-lg px-2 py-1 text-sm font-semibold text-docuflow-slate hover:bg-docuflow-input"
+              aria-label="Cerrar modal"
+              className="rounded-lg p-1.5 text-docuflow-slate hover:bg-docuflow-input hover:text-docuflow-navy"
             >
-              ✕
+              <X className="h-4 w-4" />
             </button>
           </div>
 
           {errorMessage ? (
             <div
               role="alert"
-              className="mt-4 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-3 text-sm text-docuflow-navy"
+              className="mt-4 flex items-center gap-2 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-3 text-sm text-docuflow-navy"
             >
-              {errorMessage}
+              <AlertCircle className="h-4 w-4 shrink-0 text-docuflow-orange" />
+              <span>{errorMessage}</span>
             </div>
           ) : null}
 
@@ -227,13 +238,16 @@ export function UploadProjectModal({
                 onChange={(e) => handleFilePicked(e.target.files?.[0])}
                 className="hidden"
               />
+              <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-docuflow-surface text-docuflow-primary shadow-sm">
+                <UploadCloud className="h-5 w-5" />
+              </div>
               {selectedFile ? (
                 <div>
                   <p className="text-sm font-semibold text-docuflow-primary">
                     {selectedFile.name}
                   </p>
                   <p className="mt-1 text-xs text-docuflow-slate">
-                    {(selectedFile.size / 1024).toFixed(1)} KB · Listo para filtro SVM
+                    {(selectedFile.size / 1024).toFixed(1)} KB | Listo para filtro SVM
                   </p>
                 </div>
               ) : (
@@ -250,8 +264,8 @@ export function UploadProjectModal({
 
             {isUploading && pipelinePhase ? (
               <div className="flex items-center gap-3 rounded-xl bg-docuflow-cyan/10 px-4 py-3 text-xs font-semibold text-docuflow-navy">
-                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-docuflow-cyan" />
-                {pipelinePhase}
+                <Loader2 className="h-4 w-4 animate-spin text-docuflow-cyan" />
+                <span>{pipelinePhase}</span>
               </div>
             ) : null}
 
@@ -267,9 +281,10 @@ export function UploadProjectModal({
               <button
                 type="submit"
                 disabled={isUploading}
-                className="rounded-xl bg-docuflow-primary px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-docuflow-action disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-docuflow-primary px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-docuflow-action disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isUploading ? 'Procesando .zip...' : 'Procesar .zip con SVM + IA'}
+                <Sparkles className="h-4 w-4" />
+                <span>{isUploading ? 'Procesando .zip...' : 'Procesar .zip con SVM + IA'}</span>
               </button>
             </div>
           </form>

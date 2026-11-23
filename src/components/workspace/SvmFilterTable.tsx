@@ -1,5 +1,12 @@
 'use client';
 
+import {
+  CheckCircle2,
+  EyeOff,
+  FileCode2,
+  Filter,
+  Globe,
+} from 'lucide-react';
 import { useState } from 'react';
 import type { FilteredComponentRecord } from '@/core/types';
 
@@ -25,10 +32,11 @@ export function SvmFilterTable({ components }: SvmFilterTableProps) {
     <section className="overflow-hidden rounded-2xl border border-docuflow-input bg-docuflow-surface shadow-sm">
       <div className="flex flex-col justify-between gap-4 border-b border-docuflow-input px-6 py-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-base font-bold text-docuflow-navy">
-            Componentes Filtrados por SVM ({components.length})
+          <h2 className="flex items-center gap-2 text-base font-bold text-docuflow-navy">
+            <Filter className="h-4 w-4 text-docuflow-cyan" />
+            <span>Componentes Filtrados por SVM ({components.length})</span>
           </h2>
-          <p className="text-xs text-docuflow-slate">
+          <p className="mt-0.5 text-xs text-docuflow-slate">
             Clasificación binaria de vistas <code className="rounded bg-docuflow-input px-1">.blade.php</code> en Código Relevante (1) vs Ruido Visual (0).
           </p>
         </div>
@@ -48,24 +56,26 @@ export function SvmFilterTable({ components }: SvmFilterTableProps) {
           <button
             type="button"
             onClick={() => setFilter('relevant')}
-            className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
               filter === 'relevant'
                 ? 'bg-docuflow-cyan text-docuflow-navy'
                 : 'bg-docuflow-input text-docuflow-slate hover:text-docuflow-navy'
             }`}
           >
-            Código Relevante ({relevantCount})
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            <span>Código Relevante ({relevantCount})</span>
           </button>
           <button
             type="button"
             onClick={() => setFilter('noise')}
-            className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
               filter === 'noise'
                 ? 'bg-docuflow-orange text-white'
                 : 'bg-docuflow-input text-docuflow-slate hover:text-docuflow-navy'
             }`}
           >
-            Ruido Visual ({noiseCount})
+            <EyeOff className="h-3.5 w-3.5" />
+            <span>Ruido Visual ({noiseCount})</span>
           </button>
         </div>
       </div>
@@ -89,10 +99,16 @@ export function SvmFilterTable({ components }: SvmFilterTableProps) {
               {filtered.map((item) => (
                 <tr key={item.id} className="hover:bg-docuflow-bg/25">
                   <td className="px-6 py-3.5 font-mono text-xs font-semibold text-docuflow-navy">
-                    {item.archivo_blade}
+                    <span className="inline-flex items-center gap-1.5">
+                      <FileCode2 className="h-3.5 w-3.5 text-docuflow-primary" />
+                      <span>{item.archivo_blade}</span>
+                    </span>
                   </td>
                   <td className="px-6 py-3.5 font-mono text-xs text-docuflow-primary">
-                    {item.ruta_web}
+                    <span className="inline-flex items-center gap-1.5">
+                      <Globe className="h-3.5 w-3.5 text-docuflow-slate" />
+                      <span>{item.ruta_web}</span>
+                    </span>
                   </td>
                   <td className="px-6 py-3.5">
                     <span
@@ -102,6 +118,11 @@ export function SvmFilterTable({ components }: SvmFilterTableProps) {
                           : 'bg-docuflow-input text-docuflow-slate'
                       }`}
                     >
+                      {item.etiqueta_svm === 1 ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-docuflow-cyan" />
+                      ) : (
+                        <EyeOff className="h-3.5 w-3.5 text-docuflow-slate" />
+                      )}
                       <span>{item.clasificacion}</span>
                       <span className="font-mono text-[10px] opacity-75">
                         ({item.etiqueta_svm})

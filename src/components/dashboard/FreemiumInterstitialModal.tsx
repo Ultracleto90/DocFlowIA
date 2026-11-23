@@ -1,5 +1,6 @@
 'use client';
 
+import { ArrowUpRight, Clock, Sparkles, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -62,11 +63,13 @@ export function FreemiumInterstitialModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-docuflow-navy/70 p-4 backdrop-blur-sm">
       <div className="w-full max-w-lg rounded-2xl border border-docuflow-input bg-docuflow-surface p-6 shadow-xl">
         <div className="flex items-center justify-between">
-          <span className="rounded-full bg-docuflow-orange/15 px-3 py-1 text-xs font-bold text-docuflow-orange">
-            Anuncio · Plan Freemium Explorer
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-docuflow-orange/15 px-3 py-1 text-xs font-bold text-docuflow-orange">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>Anuncio | Plan Freemium Explorer</span>
           </span>
-          <span className="text-sm font-bold text-docuflow-primary">
-            {secondsLeft}s
+          <span className="inline-flex items-center gap-1 text-sm font-bold text-docuflow-primary">
+            <Clock className="h-4 w-4" />
+            <span>{secondsLeft}s</span>
           </span>
         </div>
 
@@ -95,9 +98,10 @@ export function FreemiumInterstitialModal({
           </p>
           <Link
             href="/billing"
-            className="mt-3 inline-block rounded-xl bg-docuflow-violet px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-docuflow-violet px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
           >
-            Elimina los anuncios con Pro ($399 MXN/mes)
+            <span>Elimina los anuncios con Pro ($399 MXN/mes)</span>
+            <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
 
@@ -105,9 +109,10 @@ export function FreemiumInterstitialModal({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-xl border border-docuflow-input px-4 py-2 text-xs font-semibold text-docuflow-slate hover:bg-docuflow-input"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-docuflow-input px-4 py-2 text-xs font-semibold text-docuflow-slate hover:bg-docuflow-input"
           >
-            Cancelar carga
+            <X className="h-3.5 w-3.5" />
+            <span>Cancelar carga</span>
           </button>
           <span className="text-xs font-medium text-docuflow-slate">
             {secondsLeft > 0

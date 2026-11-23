@@ -1,5 +1,13 @@
 'use client';
 
+import {
+  Cpu,
+  CreditCard,
+  Layers,
+  LayoutDashboard,
+  LogOut,
+  ShieldAlert,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
@@ -29,10 +37,27 @@ export function AppShell({ user, children }: AppShellProps) {
     user.rol === 'Administrador' || user.plan.nombre === 'Enterprise';
 
   const navItems = [
-    { href: '/dashboard', label: 'Dashboard', match: '/dashboard' },
-    { href: '/billing', label: 'Planes y Equipo', match: '/billing' },
+    {
+      href: '/dashboard',
+      label: 'Dashboard',
+      match: '/dashboard',
+      icon: LayoutDashboard,
+    },
+    {
+      href: '/billing',
+      label: 'Planes y Equipo',
+      match: '/billing',
+      icon: CreditCard,
+    },
     ...(canSeeAudit
-      ? [{ href: '/admin/audit', label: 'Bitácora QA', match: '/admin' }]
+      ? [
+          {
+            href: '/admin/audit',
+            label: 'Bitácora QA',
+            match: '/admin',
+            icon: ShieldAlert,
+          },
+        ]
       : []),
   ];
 
@@ -52,8 +77,8 @@ export function AppShell({ user, children }: AppShellProps) {
       {/* Sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-docuflow-input bg-docuflow-surface md:flex">
         <div className="flex h-16 items-center gap-3 border-b border-docuflow-input px-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-docuflow-primary text-sm font-bold text-white">
-            {brandTitle.slice(0, 2).toUpperCase()}
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-docuflow-primary text-white shadow-sm">
+            <Layers className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-bold text-docuflow-navy">
@@ -68,6 +93,7 @@ export function AppShell({ user, children }: AppShellProps) {
         <nav className="flex-1 space-y-1.5 px-4 py-5">
           {navItems.map((item) => {
             const active = pathname.startsWith(item.match);
+            const Icon = item.icon;
             return (
               <Link
                 key={item.href}
@@ -78,7 +104,10 @@ export function AppShell({ user, children }: AppShellProps) {
                     : 'text-docuflow-slate hover:bg-docuflow-input hover:text-docuflow-navy'
                 }`}
               >
-                <span>{item.label}</span>
+                <span className="flex items-center gap-2.5">
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{item.label}</span>
+                </span>
                 {active ? (
                   <span className="h-2 w-2 rounded-full bg-docuflow-cyan" />
                 ) : null}
@@ -103,10 +132,11 @@ export function AppShell({ user, children }: AppShellProps) {
                 {user.plan.nombre}
               </span>
             </div>
-            <p className="mt-1.5 text-xs font-semibold text-docuflow-navy">
-              Motor {user.plan_details.nivel_ia}
-            </p>
-            <p className="truncate text-[11px] text-docuflow-slate">
+            <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-docuflow-navy">
+              <Cpu className="h-3.5 w-3.5 text-docuflow-violet" />
+              <span>Motor {user.plan_details.nivel_ia}</span>
+            </div>
+            <p className="mt-0.5 truncate text-[11px] text-docuflow-slate">
               {user.plan_details.modelo_ia}
             </p>
           </div>
@@ -117,11 +147,13 @@ export function AppShell({ user, children }: AppShellProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-16 items-center justify-between border-b border-docuflow-input bg-docuflow-surface px-4 sm:px-8">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-docuflow-navy md:hidden">
+            <span className="flex items-center gap-2 text-sm font-bold text-docuflow-navy md:hidden">
+              <Layers className="h-4 w-4 text-docuflow-primary" />
               {brandTitle}
             </span>
-            <span className="hidden rounded-full bg-docuflow-input px-3 py-1 text-xs font-semibold text-docuflow-primary sm:inline-flex">
-              Human-in-the-loop · SVM + {user.plan_details.nivel_ia}
+            <span className="hidden items-center gap-2 rounded-full bg-docuflow-input px-3 py-1 text-xs font-semibold text-docuflow-primary sm:inline-flex">
+              <span className="h-2 w-2 rounded-full bg-docuflow-cyan" />
+              Human-in-the-loop | SVM + {user.plan_details.nivel_ia}
             </span>
           </div>
 
@@ -131,7 +163,7 @@ export function AppShell({ user, children }: AppShellProps) {
                 {user.nombre}
               </p>
               <p className="text-[11px] text-docuflow-slate">
-                {user.rol} · {user.correo}
+                {user.rol} | {user.correo}
               </p>
             </div>
 
@@ -139,9 +171,10 @@ export function AppShell({ user, children }: AppShellProps) {
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="rounded-xl border border-docuflow-input bg-docuflow-surface px-3 py-1.5 text-xs font-semibold text-docuflow-navy transition-colors hover:bg-docuflow-input disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-docuflow-input bg-docuflow-surface px-3 py-1.5 text-xs font-semibold text-docuflow-navy transition-colors hover:bg-docuflow-input disabled:opacity-60"
             >
-              {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
+              <LogOut className="h-3.5 w-3.5 text-docuflow-slate" />
+              <span>{loggingOut ? 'Saliendo...' : 'Cerrar sesión'}</span>
             </button>
           </div>
         </header>

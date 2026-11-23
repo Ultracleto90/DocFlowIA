@@ -1,5 +1,13 @@
 'use client';
 
+import {
+  AlertCircle,
+  CheckCircle2,
+  Layers,
+  Lock,
+  LogIn,
+  Mail,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
@@ -68,8 +76,8 @@ export function LoginForm() {
     <div className="w-full max-w-md rounded-2xl border border-docuflow-input bg-docuflow-surface p-8 shadow-sm">
       <div className="mb-6">
         <span className="inline-flex items-center gap-2 rounded-full bg-docuflow-input px-3 py-1 text-xs font-semibold text-docuflow-primary">
-          <span className="h-2 w-2 rounded-full bg-docuflow-cyan" />
-          DocuFlow AI · Acceso SaaS
+          <Layers className="h-3.5 w-3.5 text-docuflow-cyan" />
+          <span>DocuFlow AI | Acceso SaaS</span>
         </span>
         <h1 className="mt-3 text-2xl font-bold text-docuflow-navy">
           Iniciar sesión
@@ -82,19 +90,23 @@ export function LoginForm() {
       {serverError ? (
         <div
           role="alert"
-          className="mb-4 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-3 text-sm text-docuflow-navy"
+          className="mb-4 flex items-center gap-2 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-3 text-sm text-docuflow-navy"
         >
-          {serverError}
+          <AlertCircle className="h-4 w-4 shrink-0 text-docuflow-orange" />
+          <span>{serverError}</span>
         </div>
       ) : null}
 
       {authenticatedUser ? (
         <div
           role="status"
-          className="mb-4 rounded-xl border border-docuflow-cyan/40 bg-docuflow-cyan/10 px-4 py-3 text-sm text-docuflow-navy"
+          className="mb-4 flex items-center gap-2 rounded-xl border border-docuflow-cyan/40 bg-docuflow-cyan/10 px-4 py-3 text-sm text-docuflow-navy"
         >
-          Sesión iniciada como <strong>{authenticatedUser.nombre}</strong> (
-          {authenticatedUser.plan.nombre} · {authenticatedUser.rol}).
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-docuflow-cyan" />
+          <span>
+            Sesión iniciada como <strong>{authenticatedUser.nombre}</strong> (
+            {authenticatedUser.plan.nombre} | {authenticatedUser.rol}).
+          </span>
         </div>
       ) : null}
 
@@ -102,9 +114,10 @@ export function LoginForm() {
         <div>
           <label
             htmlFor="login-correo"
-            className="block text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
+            className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
           >
-            Correo electrónico
+            <Mail className="h-3.5 w-3.5 text-docuflow-primary" />
+            <span>Correo electrónico</span>
           </label>
           <input
             id="login-correo"
@@ -125,9 +138,10 @@ export function LoginForm() {
         <div>
           <label
             htmlFor="login-password"
-            className="block text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
+            className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
           >
-            Contraseña
+            <Lock className="h-3.5 w-3.5 text-docuflow-primary" />
+            <span>Contraseña</span>
           </label>
           <input
             id="login-password"
@@ -135,7 +149,7 @@ export function LoginForm() {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••••••"
+            placeholder="Ingresa tu contraseña"
             className="mt-1.5 w-full rounded-xl border border-transparent bg-docuflow-input px-4 py-2.5 text-sm text-docuflow-navy placeholder:text-docuflow-slate/60 focus:border-docuflow-action focus:bg-docuflow-surface focus:outline-none"
           />
           {fieldErrors.password ? (
@@ -148,9 +162,12 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-xl bg-docuflow-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-docuflow-action disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-docuflow-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-docuflow-action disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? 'Verificando credenciales...' : 'Entrar a DocuFlow AI'}
+          <LogIn className="h-4 w-4" />
+          <span>
+            {isSubmitting ? 'Verificando credenciales...' : 'Entrar a DocuFlow AI'}
+          </span>
         </button>
       </form>
 

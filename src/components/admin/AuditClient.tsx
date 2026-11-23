@@ -1,5 +1,16 @@
 'use client';
 
+import {
+  Activity,
+  AlertCircle,
+  CheckCircle2,
+  Database,
+  ExternalLink,
+  FileWarning,
+  Filter,
+  ShieldAlert,
+  ShieldCheck,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -86,8 +97,9 @@ export function AuditClient() {
     <AppShell user={user}>
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-docuflow-navy">
-            Bitácora de Seguridad y Auditoría QA
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-docuflow-navy">
+            <ShieldCheck className="h-5 w-5 text-docuflow-primary" />
+            <span>Bitácora de Seguridad y Auditoría QA</span>
           </h1>
           <p className="mt-1 text-sm text-docuflow-slate">
             Consulta cronológica de eventos y borradores de alto consumo de tokens bajo principio de mínimo privilegio.
@@ -95,7 +107,7 @@ export function AuditClient() {
         </div>
 
         <div className="inline-flex items-center gap-2 rounded-xl border border-docuflow-cyan/50 bg-docuflow-surface px-4 py-2 text-xs font-bold text-docuflow-navy shadow-sm">
-          <span className="h-2.5 w-2.5 rounded-full bg-docuflow-cyan" />
+          <Database className="h-4 w-4 text-docuflow-cyan" />
           <span>
             Conexión activa:{' '}
             <code className="font-mono text-docuflow-primary">
@@ -109,9 +121,10 @@ export function AuditClient() {
       {errorMessage ? (
         <div
           role="alert"
-          className="mb-6 rounded-2xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-5 py-3.5 text-sm font-semibold text-docuflow-navy"
+          className="mb-6 flex items-center gap-2 rounded-2xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-5 py-3.5 text-sm font-semibold text-docuflow-navy"
         >
-          {errorMessage}
+          <AlertCircle className="h-4 w-4 shrink-0 text-docuflow-orange" />
+          <span>{errorMessage}</span>
         </div>
       ) : null}
 
@@ -120,32 +133,36 @@ export function AuditClient() {
           {/* Metrics Cards */}
           <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
-              <p className="text-xs font-semibold text-docuflow-slate">
-                Eventos en Bitácora
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate">
+                <Activity className="h-4 w-4 text-docuflow-primary" />
+                <span>Eventos en Bitácora</span>
               </p>
               <p className="mt-2 text-2xl font-extrabold text-docuflow-navy">
                 {report.metrics.total_logs}
               </p>
             </div>
             <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
-              <p className="text-xs font-semibold text-docuflow-slate">
-                Eventos EXITOSO
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate">
+                <CheckCircle2 className="h-4 w-4 text-docuflow-cyan" />
+                <span>Eventos EXITOSO</span>
               </p>
               <p className="mt-2 text-2xl font-extrabold text-docuflow-cyan">
                 {report.metrics.exitosos}
               </p>
             </div>
             <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
-              <p className="text-xs font-semibold text-docuflow-slate">
-                BLOQUEADO_UNAUTHORIZED
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate">
+                <ShieldAlert className="h-4 w-4 text-docuflow-orange" />
+                <span>BLOQUEADO_UNAUTHORIZED</span>
               </p>
               <p className="mt-2 text-2xl font-extrabold text-docuflow-orange">
                 {report.metrics.bloqueados}
               </p>
             </div>
             <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
-              <p className="text-xs font-semibold text-docuflow-slate">
-                Borradores &gt; 1,200 tokens
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate">
+                <FileWarning className="h-4 w-4 text-docuflow-violet" />
+                <span>Borradores &gt; 1,200 tokens</span>
               </p>
               <p className="mt-2 text-2xl font-extrabold text-docuflow-violet">
                 {report.metrics.high_token_drafts_count}
@@ -159,8 +176,9 @@ export function AuditClient() {
           {/* Audit Logs Table */}
           <section className="mb-8 overflow-hidden rounded-2xl border border-docuflow-input bg-docuflow-surface shadow-sm">
             <div className="flex flex-col justify-between gap-4 border-b border-docuflow-input px-6 py-4 sm:flex-row sm:items-center">
-              <h2 className="text-base font-bold text-docuflow-navy">
-                Eventos Cronológicos (logs_auditoria)
+              <h2 className="flex items-center gap-2 text-base font-bold text-docuflow-navy">
+                <Filter className="h-4 w-4 text-docuflow-primary" />
+                <span>Eventos Cronológicos (logs_auditoria)</span>
               </h2>
 
               <div className="flex flex-wrap gap-2">
@@ -282,9 +300,10 @@ export function AuditClient() {
                         <td className="px-5 py-3 text-right">
                           <Link
                             href={`/projects/${doc.codigo_proyecto}`}
-                            className="rounded-lg bg-docuflow-primary px-3 py-1.5 font-semibold text-white hover:bg-docuflow-action"
+                            className="inline-flex items-center gap-1 rounded-lg bg-docuflow-primary px-3 py-1.5 font-semibold text-white hover:bg-docuflow-action"
                           >
-                            Auditar
+                            <span>Auditar</span>
+                            <ExternalLink className="h-3 w-3" />
                           </Link>
                         </td>
                       </tr>

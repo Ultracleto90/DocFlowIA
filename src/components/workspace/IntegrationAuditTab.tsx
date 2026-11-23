@@ -1,5 +1,13 @@
 'use client';
 
+import {
+  AlertCircle,
+  CheckCircle2,
+  Lock,
+  ShieldCheck,
+  Sparkles,
+  Webhook,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { webhookConfigSchema } from '@/core/schemas';
@@ -72,6 +80,9 @@ export function IntegrationAuditTab({
   if (!canUseWebhooks) {
     return (
       <div className="rounded-2xl border border-docuflow-violet/30 bg-docuflow-surface p-8 text-center shadow-sm">
+        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-docuflow-violet/10 text-docuflow-violet">
+          <Lock className="h-5 w-5" />
+        </div>
         <p className="text-xs font-bold uppercase tracking-wide text-docuflow-violet">
           Función disponible desde Plan Team IA ($999 MXN/mes)
         </p>
@@ -83,9 +94,10 @@ export function IntegrationAuditTab({
         </p>
         <Link
           href="/billing"
-          className="mt-5 inline-block rounded-xl bg-docuflow-violet px-5 py-2.5 text-xs font-semibold text-white hover:opacity-90"
+          className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-docuflow-violet px-5 py-2.5 text-xs font-semibold text-white hover:opacity-90"
         >
-          Ver Planes Team IA y Enterprise
+          <Sparkles className="h-4 w-4" />
+          <span>Ver Planes Team IA y Enterprise</span>
         </Link>
       </div>
     );
@@ -94,25 +106,28 @@ export function IntegrationAuditTab({
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <section className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-6 shadow-sm">
-        <h3 className="text-base font-bold text-docuflow-navy">
-          Webhook GitHub / GitLab CI
+        <h3 className="flex items-center gap-2 text-base font-bold text-docuflow-navy">
+          <Webhook className="h-4 w-4 text-docuflow-primary" />
+          <span>Webhook GitHub / GitLab CI</span>
         </h3>
         <p className="mt-1 text-xs text-docuflow-slate">
           Configura la URL destino para notificar al repositorio cuando se validen borradores de documentación en {project.codigo_proyecto}.
         </p>
 
         {statusMessage ? (
-          <div className="mt-4 rounded-xl border border-docuflow-cyan/40 bg-docuflow-cyan/10 px-4 py-2.5 text-xs font-semibold text-docuflow-navy">
-            {statusMessage}
+          <div className="mt-4 flex items-center gap-2 rounded-xl border border-docuflow-cyan/40 bg-docuflow-cyan/10 px-4 py-2.5 text-xs font-semibold text-docuflow-navy">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-docuflow-cyan" />
+            <span>{statusMessage}</span>
           </div>
         ) : null}
 
         {errorMessage ? (
           <div
             role="alert"
-            className="mt-4 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-2.5 text-xs font-semibold text-docuflow-navy"
+            className="mt-4 flex items-center gap-2 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-2.5 text-xs font-semibold text-docuflow-navy"
           >
-            {errorMessage}
+            <AlertCircle className="h-4 w-4 shrink-0 text-docuflow-orange" />
+            <span>{errorMessage}</span>
           </div>
         ) : null}
 
@@ -145,8 +160,9 @@ export function IntegrationAuditTab({
       </section>
 
       <section className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-6 shadow-sm">
-        <h3 className="text-base font-bold text-docuflow-navy">
-          Resumen de Auditoría Blade / WCAG 2.1 / OWASP
+        <h3 className="flex items-center gap-2 text-base font-bold text-docuflow-navy">
+          <ShieldCheck className="h-4 w-4 text-docuflow-violet" />
+          <span>Resumen de Auditoría Blade / WCAG 2.1 / OWASP</span>
         </h3>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-docuflow-bg/60 p-3.5">
