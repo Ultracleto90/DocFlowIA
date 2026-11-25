@@ -2,12 +2,14 @@ import type { AuditResult, DocumentAuditState, PlanName } from '@/core/constants
 import type {
   AdminAuditResponseDTO,
   AuthResponseDTO,
+  BundleArtifactKey,
   CreatePlanRequestDTO,
   CreatePlanRequestResponseDTO,
   CreateProjectResponseDTO,
   DeleteProjectResponseDTO,
   EnterpriseConfigRequestDTO,
   EnterpriseConfigResponseDTO,
+  FilesExplorerResponseDTO,
   LoginRequestDTO,
   LogoutResponseDTO,
   MeResponseDTO,
@@ -15,6 +17,8 @@ import type {
   PlansCatalogResponseDTO,
   ProjectDetailResponseDTO,
   ProjectListResponseDTO,
+  ProjectSecurityResponseDTO,
+  ProjectTopologyResponseDTO,
   RegisterRequestDTO,
   SaveWebhookRequestDTO,
   SaveWebhookResponseDTO,
@@ -92,6 +96,44 @@ export const projectPetitions = {
       `/api/projects/${encodeURIComponent(codigo)}`,
       payload,
     );
+  },
+
+  getTopology(codigo: string): Promise<ProjectTopologyResponseDTO> {
+    return basicGet<ProjectTopologyResponseDTO>(
+      `/api/projects/${encodeURIComponent(codigo)}/topology`,
+    );
+  },
+
+  getSecurity(codigo: string): Promise<ProjectSecurityResponseDTO> {
+    return basicGet<ProjectSecurityResponseDTO>(
+      `/api/projects/${encodeURIComponent(codigo)}/security`,
+    );
+  },
+
+  downloadBundle(codigo: string, filename?: string): Promise<void> {
+    return basicDownload(
+      `/api/projects/${encodeURIComponent(codigo)}/bundle`,
+      filename ?? `${codigo}_kit_completo.zip`,
+      { params: { artifact: 'kit' } },
+    );
+  },
+
+  downloadArtifact(
+    codigo: string,
+    artifact: BundleArtifactKey,
+    filename: string,
+  ): Promise<void> {
+    return basicDownload(
+      `/api/projects/${encodeURIComponent(codigo)}/bundle`,
+      filename,
+      { params: { artifact } },
+    );
+  },
+};
+
+export const filesPetitions = {
+  listExplorer(): Promise<FilesExplorerResponseDTO> {
+    return basicGet<FilesExplorerResponseDTO>('/api/files');
   },
 };
 

@@ -11,6 +11,7 @@ import { auditLogRepository } from '@/infrastructure/repositories/auditLogReposi
 import { componentRepository } from '@/infrastructure/repositories/componentRepository';
 import { documentRepository } from '@/infrastructure/repositories/documentRepository';
 import { projectRepository } from '@/infrastructure/repositories/projectRepository';
+import { topologyRepository } from '@/infrastructure/repositories/topologyRepository';
 import { processProjectZip } from './aiPipelineAdapter';
 import { ServiceError } from './errors';
 import { planGuardService } from './planGuardService';
@@ -135,6 +136,7 @@ export async function deleteProjectForUser(
   await Promise.all([
     componentRepository.deleteByProjectCode(codigoProyecto),
     documentRepository.deleteByProjectCode(codigoProyecto),
+    topologyRepository.deleteByProjectCode(codigoProyecto),
   ]);
   await projectRepository.deleteByCode(codigoProyecto);
 

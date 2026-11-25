@@ -3,11 +3,17 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowLeft,
+  Check,
   ChevronRight,
+  Copy,
   FileText,
   Filter,
   FolderArchive,
+  FolderTree,
   Lock,
+  Network,
+  Package,
+  ShieldCheck,
   Webhook,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -19,19 +25,22 @@ import type {
   FilteredComponentRecord,
   GeneratedDocumentRecord,
   ProjectRecord,
+  ProjectTopologyRecord,
 } from '@/core/types';
 import { AppShell } from '@/components/layout/AppShell';
 import { HttpError } from '@/lib/http/basicGet';
 import { authPetitions, projectPetitions } from '@/services/client/petitions';
 import { DocumentSplitEditor } from './DocumentSplitEditor';
 import { IntegrationAuditTab } from './IntegrationAuditTab';
+import { SecurityStrideTab } from './SecurityStrideTab';
 import { SvmFilterTable } from './SvmFilterTable';
+import { TopologyGraphTab } from './TopologyGraphTab';
 
 interface ProjectWorkspaceClientProps {
   codigo: string;
 }
 
-type WorkspaceTab = 'docs' | 'svm' | 'integration';
+type WorkspaceTab = 'docs' | 'topology' | 'svm' | 'security' | 'integration';
 
 const STATUS_LABELS: Record<ProcessingState, string> = {
   pendiente: 'Pendiente',
@@ -49,8 +58,14 @@ export function ProjectWorkspaceClient({
   const [project, setProject] = useState<ProjectRecord | null>(null);
   const [components, setComponents] = useState<FilteredComponentRecord[]>([]);
   const [documents, setDocuments] = useState<GeneratedDocumentRecord[]>([]);
+  const [topology, setTopology] = useState<ProjectTopologyRecord | null>(null);
+  const [topologyLoading, setTopologyLoading] = useState(false);
+  const [topologyError, setTopologyError] = useState<string | null>(null);
+
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('docs');
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloadingBundle, setIsDownloadingBundle] = useState(false);
+  const [contextCopied, setContextCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadWorkspace = useCallback(async () => {
@@ -81,9 +96,65 @@ export function ProjectWorkspaceClient({
     }
   }, [codigo, router]);
 
+  const loadTopology = useCallback(async () => {
+    setTopologyLoading(true);
+    setTopologyError(null);
+    try {
+      const res = await projectPetitions.getTopology(codigo);
+      setTopology(res.topology);
+      return res.topology;
+    } catch (err: unknown) {
+      const msg =
+        err instanceof HttpError
+          ? err.message
+          : 'No se pudo cargar la topología IA del proyecto.';
+      setTopologyError(msg);
+      return null;
+    } finally {
+      setTopologyLoading(false);
+    }
+  }, [codigo]);
+
   useEffect(() => {
     void loadWorkspace();
   }, [loadWorkspace]);
+
+  useEffect(() => {
+    if (activeTab === 'topology' && !topology && !topologyLoading) {
+      void loadTopology();
+    }
+  }, [activeTab, loadTopology, topology, topologyLoading]);
+
+  async function handleCopyAgentContext() {
+    if (!project) return;
+    const loaded = topology ?? (await loadTopology());
+    if (!loaded) return;
+
+    const contextPayload = [
+      `# Contexto para Agente IA - ${project.nombre_proyecto} (${project.codigo_proyecto})`,
+      loaded.llms_txt,
+      '---',
+      loaded.topology_markdown,
+    ].join('\n\n');
+
+    try {
+      await navigator.clipboard.writeText(contextPayload);
+      setContextCopied(true);
+      window.setTimeout(() => setContextCopied(false), 2500);
+    } catch {
+      // Ignore clipboard denial
+    }
+  }
+
+  async function handleDownloadBundle() {
+    if (!project) return;
+    setIsDownloadingBundle(true);
+    try {
+      await projectPetitions.downloadBundle(project.codigo_proyecto);
+    } finally {
+      setIsDownloadingBundle(false);
+    }
+  }
 
   function handleDocumentUpdated(updated: GeneratedDocumentRecord) {
     setDocuments((prev) =>
@@ -120,21 +191,39 @@ export function ProjectWorkspaceClient({
     );
   }
 
+  const securityUnlocked =
+    user.plan.nombre === 'Team IA' || user.plan.nombre === 'Enterprise';
+
   const tabs = [
     {
       id: 'docs' as const,
       label: 'Documentación (Split-View)',
       icon: FileText,
+      locked: false,
+    },
+    {
+      id: 'topology' as const,
+      label: 'Topología IA',
+      icon: Network,
+      locked: false,
     },
     {
       id: 'svm' as const,
       label: `Filtro SVM (${components.length})`,
       icon: Filter,
+      locked: false,
+    },
+    {
+      id: 'security' as const,
+      label: 'Seguridad (OWASP / STRIDE)',
+      icon: ShieldCheck,
+      locked: !securityUnlocked,
     },
     {
       id: 'integration' as const,
       label: 'Integración y Auditoría',
       icon: Webhook,
+      locked: !user.plan_details.features.webhooks,
     },
   ];
 
@@ -149,7 +238,9 @@ export function ProjectWorkspaceClient({
           Dashboard
         </Link>
         <ChevronRight className="h-3.5 w-3.5" />
-        <span>Proyectos</span>
+        <Link href="/files" className="hover:text-docuflow-primary">
+          Biblioteca
+        </Link>
         <ChevronRight className="h-3.5 w-3.5" />
         <span className="font-semibold text-docuflow-navy">
           {project.codigo_proyecto}
@@ -157,7 +248,7 @@ export function ProjectWorkspaceClient({
       </nav>
 
       {/* Workspace Header */}
-      <div className="mb-6 flex flex-col justify-between gap-4 rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm sm:flex-row sm:items-center">
+      <div className="mb-6 flex flex-col justify-between gap-4 rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm xl:flex-row xl:items-center">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="rounded-lg bg-docuflow-primary px-2.5 py-1 font-mono text-xs font-bold text-white">
@@ -180,21 +271,62 @@ export function ProjectWorkspaceClient({
           </p>
         </div>
 
-        <Link
-          href="/dashboard"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-docuflow-input bg-docuflow-bg/50 px-4 py-2 text-xs font-semibold text-docuflow-navy hover:bg-docuflow-input"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Volver al Dashboard</span>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={topologyLoading}
+            onClick={() => void handleCopyAgentContext()}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-docuflow-border bg-docuflow-elevated px-3.5 py-2 text-xs font-semibold text-docuflow-navy transition-colors hover:border-docuflow-primary disabled:opacity-60"
+          >
+            {contextCopied ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-docuflow-cyan" />
+                <span>Contexto copiado</span>
+              </>
+            ) : (
+              <>
+                <Copy className="h-3.5 w-3.5 text-docuflow-primary" />
+                <span>Copiar Contexto para Agente IA</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            disabled={isDownloadingBundle}
+            onClick={() => void handleDownloadBundle()}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-docuflow-cyan px-3.5 py-2 text-xs font-bold text-slate-950 transition-opacity hover:opacity-95 disabled:opacity-60"
+          >
+            <Package className="h-3.5 w-3.5" />
+            <span>
+              {isDownloadingBundle
+                ? 'Empaquetando .zip...'
+                : 'Descargar Kit Completo (.zip)'}
+            </span>
+          </button>
+
+          <Link
+            href={`/files?project=${encodeURIComponent(project.codigo_proyecto)}`}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-docuflow-input bg-docuflow-bg/50 px-3.5 py-2 text-xs font-semibold text-docuflow-navy hover:bg-docuflow-input"
+          >
+            <FolderTree className="h-3.5 w-3.5 text-docuflow-cyan" />
+            <span>Ver carpeta</span>
+          </Link>
+
+          <Link
+            href="/dashboard"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-docuflow-input bg-docuflow-bg/50 px-3.5 py-2 text-xs font-semibold text-docuflow-navy hover:bg-docuflow-input"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Dashboard</span>
+          </Link>
+        </div>
       </div>
 
       {/* Workspace Tabs */}
       <div className="mb-6 flex flex-wrap gap-2 border-b border-docuflow-input pb-3">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
-          const isLockedIntegration =
-            tab.id === 'integration' && !user.plan_details.features.webhooks;
           const Icon = tab.icon;
 
           return (
@@ -216,7 +348,7 @@ export function ProjectWorkspaceClient({
                 />
               ) : null}
               <span className="relative z-10 flex items-center gap-1.5">
-                {isLockedIntegration ? (
+                {tab.locked ? (
                   <Lock className="h-3.5 w-3.5 text-docuflow-orange" />
                 ) : (
                   <Icon className="h-3.5 w-3.5" />
@@ -244,8 +376,21 @@ export function ProjectWorkspaceClient({
               documents={documents}
               onDocumentUpdated={handleDocumentUpdated}
             />
+          ) : activeTab === 'topology' ? (
+            <TopologyGraphTab
+              codigoProyecto={project.codigo_proyecto}
+              topology={topology}
+              isLoading={topologyLoading}
+              errorMessage={topologyError}
+              onRetry={() => void loadTopology()}
+            />
           ) : activeTab === 'svm' ? (
             <SvmFilterTable components={components} />
+          ) : activeTab === 'security' ? (
+            <SecurityStrideTab
+              codigoProyecto={project.codigo_proyecto}
+              user={user}
+            />
           ) : (
             <IntegrationAuditTab
               user={user}

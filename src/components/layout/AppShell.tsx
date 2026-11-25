@@ -3,6 +3,7 @@
 import {
   Cpu,
   CreditCard,
+  FolderTree,
   Home,
   LayoutDashboard,
   LogOut,
@@ -38,6 +39,12 @@ export function AppShell({ user, children }: AppShellProps) {
       label: 'Dashboard',
       match: '/dashboard',
       icon: LayoutDashboard,
+    },
+    {
+      href: '/files',
+      label: 'Biblioteca de Archivos',
+      match: '/files',
+      icon: FolderTree,
     },
     {
       href: '/billing',

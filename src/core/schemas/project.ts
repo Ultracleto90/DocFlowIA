@@ -20,5 +20,27 @@ export const webhookConfigSchema = z.object({
     .url('La URL del webhook debe ser válida (https://...).'),
 });
 
+export const projectCodeParamSchema = z.object({
+  codigo: z
+    .string()
+    .trim()
+    .regex(/^PRJ-\d{3,}$/i, 'Código de proyecto inválido.')
+    .transform((value) => value.toUpperCase()),
+});
+
+export const bundleQuerySchema = z.object({
+  artifact: z
+    .enum([
+      'kit',
+      'source_zip',
+      'topology_md',
+      'project_map_json',
+      'llms_txt',
+      'security_md',
+    ])
+    .optional()
+    .default('kit'),
+});
+
 export type CreateProjectMetaInput = z.infer<typeof createProjectMetaSchema>;
 export type WebhookConfigInput = z.infer<typeof webhookConfigSchema>;
