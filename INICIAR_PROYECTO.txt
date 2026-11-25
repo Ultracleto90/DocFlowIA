@@ -1,0 +1,133 @@
+================================================================================
+DOCUFLOW AI (SaaS) - GUIA DE INICIO, DIAGNOSTICO Y APAGADO
+================================================================================
+
+Esta guia explica paso a paso como levantar DocuFlow AI desde cero despues de
+reiniciar la laptop, sin instalar servicios en el host Debian y conservando
+los datos en la nube (MongoDB Atlas).
+
+Directorio del proyecto:
+  cd /home/ultracleto/DocFlowIA
+
+
+--------------------------------------------------------------------------------
+1. CONEXION DE BASE DE DATOS (MONGODB ATLAS)
+--------------------------------------------------------------------------------
+DocuFlow AI esta configurado en .env para conectarse directamente al cluster
+de MongoDB Atlas (base de datos: DocuFlowAI).
+
+Al estar en la nube, ya no es obligatorio encender el contenedor local
+"mongo-utvt" tras reiniciar tu laptop (solo asegurate de tener conexion a
+Internet y que tu IP este permitida en Atlas Network Access).
+
+Nota: El archivo .env.local.bak conserva la configuracion anterior por si
+algun dia necesitas volver temporalmente a la base local (mongo-utvt).
+
+
+--------------------------------------------------------------------------------
+2. LEVANTAR DOCUFLOW AI CON DOCKER COMPOSE
+--------------------------------------------------------------------------------
+Desde /home/ultracleto/DocFlowIA ejecuta:
+
+  docker compose up -d
+
+Esto inicia los dos contenedores de la aplicacion:
+  - docuflow_web   (Next.js en puerto interno 3000, DNS 8.8.8.8 / 1.1.1.1)
+  - docuflow_nginx (Reverse proxy en puerto 80 -> http://localhost)
+
+Si en algun momento recreas Docker desde cero y no existe la red externa
+requerida por docker-compose.yml, creala con:
+
+  docker network create docuflow_network
+
+IMPORTANTE: Si modificas variables en .env (MONGO_URI, JWT_SECRET o credenciales
+de Google OAuth), "docker compose restart" NO recarga .env. Recrea web con:
+
+  docker compose up -d --force-recreate web
+
+
+--------------------------------------------------------------------------------
+3. VERIFICAR QUE EL SISTEMA RESPONDE (HEALTH CHECK)
+--------------------------------------------------------------------------------
+Espera unos segundos a que Next.js termine de iniciar y ejecuta:
+
+  curl -i http://localhost/api/health
+
+Respuesta esperada:
+  - Codigo HTTP: 200 OK
+  - JSON con "healthy": true para ambas conexiones de MongoDB Atlas.
+
+
+--------------------------------------------------------------------------------
+4. URLS CLAVE DE LA PLATAFORMA
+--------------------------------------------------------------------------------
+Con Nginx escuchando en el puerto 80:
+
+  - Landing Page publica:           http://localhost/
+  - Iniciar sesion:                 http://localhost/login
+  - Crear cuenta Freemium:          http://localhost/register
+  - Dashboard de proyectos:         http://localhost/dashboard
+  - Biblioteca de archivos:         http://localhost/files
+  - Workspace proyecto demo:        http://localhost/projects/PRJ-004
+  - Planes, equipo y Google OAuth:  http://localhost/billing
+  - Panel Aprobaciones (Admin):     http://localhost/admin/approvals
+  - Bitacora QA (Admin/Enterprise): http://localhost/admin/audit
+
+
+--------------------------------------------------------------------------------
+5. CUENTAS DE PRUEBA Y GOOGLE OAUTH
+--------------------------------------------------------------------------------
+Cuentas sincronizadas en DocuFlowAI (coleccion usuarios en Atlas):
+
+  1) Administrador:
+     Correo:     emiliano@docuflow.ia
+     Contrasena: DocuFlow2026!
+     Acceso a:   Dashboard, /files, /billing, /admin/approvals y /admin/audit
+
+  2) Project Manager:
+     Correo:     nadia@docuflow.ia
+     Contrasena: DocuFlow2026!
+     Acceso a:   Dashboard, /files (incluyendo carpetas compartidas por ACL), /billing
+
+  3) Acceso con Google OAuth 2.0:
+     En /login y /register puedes usar "Continuar con Google".
+     Requiere GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET y GOOGLE_REDIRECT_URI en .env
+     (consulta .env.example para ver la estructura sin exponer secretos).
+
+
+--------------------------------------------------------------------------------
+6. DIAGNOSTICO Y LOGS SI ALGO FALLA
+--------------------------------------------------------------------------------
+A) Ver estado de los contenedores:
+   docker compose ps
+   docker ps -a
+
+B) Ver logs en tiempo real del servidor Next.js:
+   docker compose logs -f --tail=100 web
+
+C) Ver logs del proxy Nginx (por ejemplo si ves 502 Bad Gateway al arrancar):
+   docker compose logs -f --tail=100 nginx
+
+D) Causas comunes tras reiniciar o cambiar de red Wi-Fi:
+   - "502 Bad Gateway": docuflow_web sigue compilando; espera 10-20s y vuelve a
+     probar curl -i http://localhost/api/health.
+   - Timeout o error de conexion a Atlas: verifica tu conexion a Internet y
+     confirma que tu IP publica actual este autorizada en MongoDB Atlas ->
+     Network Access.
+   - Verificacion tecnica de TypeScript y build dentro del contenedor:
+     docker compose exec -T web npx tsc --noEmit
+     docker compose exec -T -e NODE_ENV=production web npm run build
+     docker compose restart web
+
+
+--------------------------------------------------------------------------------
+7. APAGAR TODO LIMPIAMENTE (SIN BORRAR DATOS)
+--------------------------------------------------------------------------------
+Para detener los contenedores de DocuFlow AI manteniendo storage/uploads/ y los
+datos en MongoDB Atlas intactos:
+
+  cd /home/ultracleto/DocFlowIA
+  docker compose down
+
+ADVERTENCIA: No ejecutes "docker compose down -v" para evitar borrar volumenes.
+================================================================================
