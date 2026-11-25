@@ -11,6 +11,7 @@ import {
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { loginSchema } from '@/core/schemas';
@@ -23,9 +24,27 @@ interface FieldErrors {
   password?: string;
 }
 
+function mapOAuthErrorMessage(code: string | null): string | null {
+  switch (code) {
+    case 'google_cancelled':
+      return 'Cancelaste el inicio de sesión con Google. Puedes intentarlo nuevamente o usar tu correo.';
+    case 'google_state_invalid':
+      return 'La validación de seguridad de Google expiró. Intenta nuevamente.';
+    case 'google_already_linked':
+      return 'Esta cuenta de Google ya está vinculada a otro usuario.';
+    case 'google_auth_failed':
+      return 'No se pudo completar el acceso con Google. Verifica tu cuenta e intenta de nuevo.';
+    default:
+      return null;
+  }
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const nextParam = searchParams.get('next');
+  const oauthErrorMessage = mapOAuthErrorMessage(searchParams.get('error'));
 
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
@@ -34,6 +53,8 @@ export function LoginForm() {
   const [authenticatedUser, setAuthenticatedUser] =
     useState<AuthUserProfile | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const displayedError = serverError ?? oauthErrorMessage;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -55,7 +76,6 @@ export function LoginForm() {
       const response = await authPetitions.login(validation.data);
       setAuthenticatedUser(response.user);
 
-      const nextParam = searchParams.get('next');
       const safeTarget =
         nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')
           ? nextParam
@@ -98,13 +118,13 @@ export function LoginForm() {
         </p>
       </div>
 
-      {serverError ? (
+      {displayedError ? (
         <div
           role="alert"
           className="mb-4 flex items-center gap-2 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-3 text-sm text-docuflow-navy"
         >
           <AlertCircle className="h-4 w-4 shrink-0 text-docuflow-orange" />
-          <span>{serverError}</span>
+          <span>{displayedError}</span>
         </div>
       ) : null}
 
@@ -120,6 +140,15 @@ export function LoginForm() {
           </span>
         </div>
       ) : null}
+
+      <div className="mb-4">
+        <GoogleAuthButton nextPath={nextParam} label="Continuar con Google" />
+        <div className="mt-4 flex items-center gap-3 text-[11px] font-medium uppercase tracking-wider text-docuflow-slate">
+          <span className="h-px flex-1 bg-docuflow-border" />
+          <span>o continúa con correo</span>
+          <span className="h-px flex-1 bg-docuflow-border" />
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div>
@@ -185,7 +214,7 @@ export function LoginForm() {
       <div className="mt-6 flex items-center justify-between border-t border-docuflow-input pt-4 text-xs text-docuflow-slate">
         <span>¿Aún no tienes cuenta?</span>
         <Link
-          href="/register"
+          href={nextParam ? `/register?next=${encodeURIComponent(nextParam)}` : '/register'}
           className="font-semibold text-docuflow-action hover:underline"
         >
           Crear cuenta Freemium

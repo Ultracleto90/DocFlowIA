@@ -3,21 +3,32 @@
 import {
   AlertCircle,
   ArrowLeft,
+  Building2,
   Check,
   CheckCircle2,
   ChevronRight,
+  Clock,
   Crown,
   KeyRound,
+  Link2,
   Lock,
   Palette,
+  Settings2,
   Sparkles,
   Trash2,
+  Unlink,
   UserPlus,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { PlanAdvisorBot } from '@/components/advisor/PlanAdvisorBot';
+import { EnterpriseConfiguratorModal } from '@/components/billing/EnterpriseConfiguratorModal';
+import { TeamIaWizardModal } from '@/components/billing/TeamIaWizardModal';
+import { AppShell } from '@/components/layout/AppShell';
+import { StaggerGrid, StaggerItem } from '@/components/motion/MotionPrimitives';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
   USER_ROLES,
   type PlanDefinition,
@@ -28,22 +39,40 @@ import {
   enterpriseConfigSchema,
   teamInviteSchema,
 } from '@/core/schemas';
-import type { AuthUserProfile } from '@/core/types';
-import { AppShell } from '@/components/layout/AppShell';
-import { StaggerGrid, StaggerItem } from '@/components/motion/MotionPrimitives';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import type { AuthUserProfile, PlanRequestRecord } from '@/core/types';
 import { HttpError } from '@/lib/http/basicGet';
 import { authPetitions, billingPetitions } from '@/services/client/petitions';
 
+function mapGoogleBillingError(code: string | null): string | null {
+  switch (code) {
+    case 'google_cancelled':
+      return 'Cancelaste la vinculación con Google.';
+    case 'google_already_linked':
+      return 'Esa cuenta de Google ya está vinculada a otro usuario.';
+    case 'google_state_invalid':
+    case 'google_auth_failed':
+      return 'No se pudo vincular la cuenta de Google. Intenta de nuevo.';
+    default:
+      return null;
+  }
+}
+
 export function BillingClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [user, setUser] = useState<AuthUserProfile | null>(null);
   const [plans, setPlans] = useState<readonly PlanDefinition[]>([]);
+  const [planRequests, setPlanRequests] = useState<PlanRequestRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [switchingPlan, setSwitchingPlan] = useState<PlanName | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [teamWizardOpen, setTeamWizardOpen] = useState(false);
+  const [enterpriseConfigOpen, setEnterpriseConfigOpen] = useState(false);
+  const [confirmUnlinkOpen, setConfirmUnlinkOpen] = useState(false);
+  const [isUnlinkingGoogle, setIsUnlinkingGoogle] = useState(false);
 
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<UserRole>('Revisor QA');
@@ -73,12 +102,14 @@ export function BillingClient() {
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const [meRes, plansRes] = await Promise.all([
+      const [meRes, plansRes, requestsRes] = await Promise.all([
         authPetitions.me(),
         billingPetitions.getPlans(),
+        billingPetitions.listMyPlanRequests(),
       ]);
       setUser(meRes.user);
       setPlans(plansRes.plans);
+      setPlanRequests(requestsRes.requests);
       syncEnterpriseFields(meRes.user);
     } catch (err: unknown) {
       if (err instanceof HttpError && err.status === 401) {
@@ -98,6 +129,25 @@ export function BillingClient() {
   useEffect(() => {
     void loadBilling();
   }, [loadBilling]);
+
+  useEffect(() => {
+    const planQuery = searchParams.get('plan')?.toLowerCase();
+    const googleState = searchParams.get('google');
+    const googleError = mapGoogleBillingError(searchParams.get('google_error'));
+
+    if (planQuery === 'enterprise') {
+      setEnterpriseConfigOpen(true);
+    } else if (planQuery === 'team' || planQuery === 'team ia') {
+      setTeamWizardOpen(true);
+    }
+
+    if (googleState === 'linked') {
+      setStatusMessage('Cuenta de Google vinculada correctamente.');
+    }
+    if (googleError) {
+      setErrorMessage(googleError);
+    }
+  }, [searchParams]);
 
   async function handlePlanChange(planName: PlanName) {
     setSwitchingPlan(planName);
@@ -189,10 +239,10 @@ export function BillingClient() {
       },
     });
     if (!parsed.success || !parsed.data.white_label) {
-      const msg =
-        parsed.success
-          ? 'Configuración inválida.'
-          : parsed.error.issues[0]?.message ?? 'Configuración White-Label inválida.';
+      const msg = parsed.success
+        ? 'Configuración inválida.'
+        : parsed.error.issues[0]?.message ??
+          'Configuración White-Label inválida.';
       setErrorMessage(msg);
       return;
     }
@@ -240,6 +290,34 @@ export function BillingClient() {
     }
   }
 
+  async function handleConfirmUnlinkGoogle() {
+    setIsUnlinkingGoogle(true);
+    setErrorMessage(null);
+    setStatusMessage(null);
+    try {
+      const res = await authPetitions.unlinkGoogle();
+      setUser(res.user);
+      setConfirmUnlinkOpen(false);
+      setStatusMessage(res.message);
+    } catch (err: unknown) {
+      setErrorMessage(
+        err instanceof HttpError
+          ? err.message
+          : 'No se pudo desvincular la cuenta de Google.',
+      );
+    } finally {
+      setIsUnlinkingGoogle(false);
+    }
+  }
+
+  function handlePlanRequestCreated(
+    created: PlanRequestRecord,
+    message: string,
+  ) {
+    setPlanRequests((prev) => [created, ...prev]);
+    setStatusMessage(message);
+  }
+
   if (isLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-docuflow-bg p-6">
@@ -255,6 +333,7 @@ export function BillingClient() {
   const canInvite = user.plan.nombre !== 'Freemium';
   const availableRoles: readonly UserRole[] =
     user.plan.nombre === 'Pro' ? ['Revisor QA'] : USER_ROLES;
+  const hasGoogleLinked = Boolean(user.google_id);
 
   return (
     <AppShell user={user}>
@@ -275,10 +354,10 @@ export function BillingClient() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-docuflow-navy">
             <Crown className="h-5 w-5 text-docuflow-violet" />
-            <span>Planes, Suscripción, Equipo y Marca Blanca</span>
+            <span>Planes, Onboarding, Equipo y Cuenta</span>
           </h1>
           <p className="mt-1 text-sm text-docuflow-slate">
-            Cambia de nivel en vivo para probar cuotas, desbloqueo de PDF/IEEE 830, eliminación de anuncios, RBAC y White-Label.
+            Configura Team IA, solicita despliegues Enterprise a medida, administra roles RBAC y vincula tu acceso Google.
           </p>
         </div>
 
@@ -313,6 +392,8 @@ export function BillingClient() {
         {plans.map((plan) => {
           const isCurrent = user.plan.nombre === plan.nombre;
           const isSwitching = switchingPlan === plan.nombre;
+          const isPlanEnterprise = plan.nombre === 'Enterprise';
+          const isPlanTeam = plan.nombre === 'Team IA';
 
           return (
             <StaggerItem
@@ -347,19 +428,34 @@ export function BillingClient() {
                 </h2>
                 <p className="text-xs text-docuflow-slate">{plan.subtitulo}</p>
 
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-3xl font-extrabold text-docuflow-primary">
-                    ${plan.precio.toLocaleString('es-MX')}
-                  </span>
-                  <span className="text-xs font-medium text-docuflow-slate">
-                    MXN / mes
-                  </span>
-                </div>
+                {isPlanEnterprise ? (
+                  <div className="mt-4">
+                    <span className="font-display text-2xl font-extrabold text-docuflow-navy">
+                      A medida
+                    </span>
+                    <p className="mt-0.5 text-[11px] text-docuflow-slate">
+                      Cotización personalizada por volumen y despliegue
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="text-3xl font-extrabold text-docuflow-primary">
+                      ${plan.precio.toLocaleString('es-MX')}
+                    </span>
+                    <span className="text-xs font-medium text-docuflow-slate">
+                      MXN / mes
+                    </span>
+                  </div>
+                )}
 
                 <ul className="mt-5 space-y-2.5 border-t border-docuflow-input pt-4 text-xs text-docuflow-navy">
                   <li className="flex items-start gap-2">
                     <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-docuflow-cyan" />
-                    <span>{plan.max_proyectos_mes} proyectos / mes</span>
+                    <span>
+                      {isPlanEnterprise
+                        ? 'Proyectos mensuales ilimitados'
+                        : `${plan.max_proyectos_mes} proyectos / mes`}
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-docuflow-cyan" />
@@ -392,26 +488,261 @@ export function BillingClient() {
                 </ul>
               </div>
 
-              <button
-                type="button"
-                disabled={isCurrent || switchingPlan !== null}
-                onClick={() => void handlePlanChange(plan.nombre)}
-                className={`mt-6 w-full rounded-xl px-4 py-2.5 text-xs font-semibold transition-all active:scale-[0.98] ${
-                  isCurrent
-                    ? 'cursor-default bg-docuflow-input text-docuflow-slate'
-                    : 'bg-docuflow-primary text-white hover:bg-docuflow-action disabled:opacity-60'
-                }`}
-              >
-                {isCurrent
-                  ? 'Activo actualmente'
-                  : isSwitching
-                    ? 'Cambiando plan...'
-                    : `Cambiar a ${plan.nombre}`}
-              </button>
+              <div className="mt-6 space-y-2">
+                {isPlanEnterprise ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setEnterpriseConfigOpen(true)}
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-docuflow-cyan px-4 py-2.5 text-xs font-bold text-slate-950 transition-all hover:opacity-95 active:scale-[0.98]"
+                    >
+                      <Settings2 className="h-3.5 w-3.5" />
+                      <span>Configurar Enterprise</span>
+                    </button>
+                    {!isCurrent ? (
+                      <button
+                        type="button"
+                        disabled={switchingPlan !== null}
+                        onClick={() => void handlePlanChange('Enterprise')}
+                        className="w-full rounded-xl border border-docuflow-border bg-docuflow-elevated px-3 py-2 text-[11px] font-semibold text-docuflow-slate hover:text-docuflow-navy disabled:opacity-60"
+                      >
+                        {isSwitching
+                          ? 'Activando sandbox...'
+                          : 'Activar sandbox Enterprise'}
+                      </button>
+                    ) : null}
+                  </>
+                ) : isPlanTeam ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setTeamWizardOpen(true)}
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-docuflow-violet px-4 py-2.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                    >
+                      <Users className="h-3.5 w-3.5" />
+                      <span>Onboarding Team IA (3 pasos)</span>
+                    </button>
+                    {!isCurrent ? (
+                      <button
+                        type="button"
+                        disabled={switchingPlan !== null}
+                        onClick={() => void handlePlanChange('Team IA')}
+                        className="w-full rounded-xl border border-docuflow-border bg-docuflow-elevated px-3 py-2 text-[11px] font-semibold text-docuflow-slate hover:text-docuflow-navy disabled:opacity-60"
+                      >
+                        {isSwitching
+                          ? 'Activando modo prueba...'
+                          : 'Activar modo prueba Team IA'}
+                      </button>
+                    ) : null}
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isCurrent || switchingPlan !== null}
+                    onClick={() => void handlePlanChange(plan.nombre)}
+                    className={`w-full rounded-xl px-4 py-2.5 text-xs font-semibold transition-all active:scale-[0.98] ${
+                      isCurrent
+                        ? 'cursor-default bg-docuflow-input text-docuflow-slate'
+                        : 'bg-docuflow-primary text-white hover:bg-docuflow-action disabled:opacity-60'
+                    }`}
+                  >
+                    {isCurrent
+                      ? 'Activo actualmente'
+                      : isSwitching
+                        ? 'Cambiando plan...'
+                        : `Cambiar a ${plan.nombre}`}
+                  </button>
+                )}
+              </div>
             </StaggerItem>
           );
         })}
       </StaggerGrid>
+
+      {/* Plan Requests History + Linked Google Account */}
+      <div className="mb-6 grid gap-6 lg:grid-cols-3">
+        {/* Submitted Plan Requests (solicitudes_planes) */}
+        <section className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-6 shadow-sm lg:col-span-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 className="flex items-center gap-2 text-base font-bold text-docuflow-navy">
+                <Building2 className="h-4 w-4 text-docuflow-cyan" />
+                <span>Mis Solicitudes de Onboarding y Enterprise</span>
+              </h3>
+              <p className="mt-1 text-xs text-docuflow-slate">
+                Seguimiento en tiempo real de tus configuraciones guardadas en MongoDB (solicitudes_planes).
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setTeamWizardOpen(true)}
+                className="rounded-xl border border-docuflow-border bg-docuflow-elevated px-3 py-1.5 text-[11px] font-semibold text-docuflow-navy hover:border-docuflow-violet"
+              >
+                + Team IA
+              </button>
+              <button
+                type="button"
+                onClick={() => setEnterpriseConfigOpen(true)}
+                className="rounded-xl border border-docuflow-border bg-docuflow-elevated px-3 py-1.5 text-[11px] font-semibold text-docuflow-navy hover:border-docuflow-cyan"
+              >
+                + Enterprise
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {planRequests.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-docuflow-border bg-docuflow-bg p-5 text-center text-xs text-docuflow-slate">
+                Aún no has enviado solicitudes de onboarding Team IA ni configuraciones Enterprise.
+              </div>
+            ) : (
+              planRequests.map((req) => (
+                <div
+                  key={req.id}
+                  className="rounded-xl border border-docuflow-border bg-docuflow-elevated p-4 text-xs"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                          req.plan_solicitado === 'Enterprise'
+                            ? 'bg-docuflow-cyan/20 text-docuflow-cyan'
+                            : 'bg-docuflow-violet/15 text-docuflow-violet'
+                        }`}
+                      >
+                        {req.plan_solicitado}
+                      </span>
+                      <span className="font-bold text-docuflow-navy">
+                        {req.organizacion}
+                      </span>
+                    </div>
+
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${
+                        req.estado === 'aprobada'
+                          ? 'bg-docuflow-cyan/20 text-docuflow-navy'
+                          : req.estado === 'rechazada'
+                            ? 'bg-docuflow-orange/15 text-docuflow-orange'
+                            : 'bg-docuflow-input text-docuflow-slate'
+                      }`}
+                    >
+                      <Clock className="h-3 w-3" />
+                      <span>{req.estado}</span>
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-[11px] text-docuflow-slate">
+                    Correo: {req.correo_corporativo} | Usuarios: {req.num_usuarios}
+                    {req.industria ? ` | Industria: ${req.industria}` : ''}
+                    {req.integracion_git ? ` | Git: ${req.integracion_git}` : ''}
+                  </p>
+
+                  {req.personalizaciones.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {req.personalizaciones.map((item) => (
+                        <span
+                          key={item}
+                          className="rounded-lg bg-docuflow-surface px-2 py-0.5 text-[10px] font-medium text-docuflow-navy"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {req.miembros_iniciales && req.miembros_iniciales.length > 0 ? (
+                    <p className="mt-2 text-[11px] text-docuflow-slate">
+                      Invitados iniciales:{' '}
+                      {req.miembros_iniciales
+                        .map((m) => `${m.correo} (${m.rol})`)
+                        .join(', ')}
+                    </p>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* Google OAuth Linked Account */}
+        <section className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="flex items-center gap-2 text-base font-bold text-docuflow-navy">
+              <Link2 className="h-4 w-4 text-docuflow-primary" />
+              <span>Cuenta Vinculada</span>
+            </h3>
+            <span className="rounded-full bg-docuflow-input px-2.5 py-0.5 text-[11px] font-semibold capitalize text-docuflow-navy">
+              {user.auth_provider}
+            </span>
+          </div>
+
+          <p className="mt-1 text-xs text-docuflow-slate">
+            Administra tu autenticación con Google OAuth 2.0 sin perder tus proyectos.
+          </p>
+
+          <div className="mt-4 flex items-center gap-3 rounded-xl border border-docuflow-border bg-docuflow-elevated p-3.5">
+            {user.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={user.nombre}
+                className="h-10 w-10 rounded-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-docuflow-primary/15 text-xs font-bold text-docuflow-primary">
+                {user.nombre.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-xs font-bold text-docuflow-navy">
+                {user.nombre}
+              </p>
+              <p className="truncate text-[11px] text-docuflow-slate">
+                {user.correo}
+              </p>
+              <p className="text-[10px] font-medium text-docuflow-cyan">
+                {hasGoogleLinked
+                  ? 'Google OAuth 2.0 conectado'
+                  : 'Solo contraseña local'}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            {hasGoogleLinked ? (
+              <>
+                <button
+                  type="button"
+                  disabled={!user.has_local_password || isUnlinkingGoogle}
+                  onClick={() => setConfirmUnlinkOpen(true)}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-docuflow-border bg-docuflow-elevated px-4 py-2 text-xs font-semibold text-docuflow-navy transition-colors hover:border-docuflow-orange hover:text-docuflow-orange disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Unlink className="h-3.5 w-3.5" />
+                  <span>
+                    {isUnlinkingGoogle
+                      ? 'Desvinculando...'
+                      : 'Desvincular Google'}
+                  </span>
+                </button>
+                {!user.has_local_password ? (
+                  <p className="text-[11px] text-docuflow-slate">
+                    Tu cuenta fue creada con Google sin contraseña local, por lo que no puede desvincularse para evitar perder el acceso.
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <a
+                href="/api/auth/google?next=/billing"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-docuflow-primary px-4 py-2.5 text-xs font-semibold text-white transition-all hover:bg-docuflow-action"
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                <span>Vincular cuenta de Google</span>
+              </a>
+            )}
+          </div>
+        </section>
+      </div>
 
       {/* Team Management + Enterprise White-Label */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -529,15 +860,26 @@ export function BillingClient() {
           </div>
 
           {!isEnterprise ? (
-            <div className="mt-5 flex items-start gap-3 rounded-xl border border-docuflow-violet/30 bg-docuflow-violet/5 p-5 text-xs text-docuflow-navy">
-              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-docuflow-violet" />
+            <div className="mt-5 flex flex-col gap-3 rounded-xl border border-docuflow-violet/30 bg-docuflow-violet/5 p-5 text-xs text-docuflow-navy">
+              <div className="flex items-start gap-3">
+                <Lock className="mt-0.5 h-4 w-4 shrink-0 text-docuflow-violet" />
+                <div>
+                  <p className="font-semibold">
+                    Exclusivo de Plan Enterprise (A medida)
+                  </p>
+                  <p className="mt-1 text-docuflow-slate">
+                    Configura tu despliegue Enterprise o activa el modo sandbox arriba para probar White-Label y API Key REST.
+                  </p>
+                </div>
+              </div>
               <div>
-                <p className="font-semibold">
-                  Exclusivo de Plan Enterprise ($3,999 MXN/mes)
-                </p>
-                <p className="mt-1 text-docuflow-slate">
-                  Cambia al plan Enterprise arriba para activar White-Label en vivo y generar tu API Key REST.
-                </p>
+                <button
+                  type="button"
+                  onClick={() => setEnterpriseConfigOpen(true)}
+                  className="rounded-xl bg-docuflow-cyan px-3.5 py-2 text-[11px] font-bold text-slate-950 hover:opacity-95"
+                >
+                  Configurar Enterprise
+                </button>
               </div>
             </div>
           ) : (
@@ -635,6 +977,20 @@ export function BillingClient() {
         </section>
       </div>
 
+      <TeamIaWizardModal
+        open={teamWizardOpen}
+        defaultEmail={user.correo}
+        onClose={() => setTeamWizardOpen(false)}
+        onCreated={handlePlanRequestCreated}
+      />
+
+      <EnterpriseConfiguratorModal
+        open={enterpriseConfigOpen}
+        defaultEmail={user.correo}
+        onClose={() => setEnterpriseConfigOpen(false)}
+        onCreated={handlePlanRequestCreated}
+      />
+
       <ConfirmDialog
         open={pendingRemoveEmail !== null}
         title="Remover miembro del equipo"
@@ -647,6 +1003,22 @@ export function BillingClient() {
         isLoading={removingEmail !== null}
         onConfirm={() => void handleConfirmRemoveMember()}
         onCancel={() => !removingEmail && setPendingRemoveEmail(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmUnlinkOpen}
+        title="Desvincular cuenta de Google"
+        description="Podrás seguir iniciando sesión con tu correo y contraseña local. ¿Deseas desvincular Google de tu cuenta?"
+        confirmLabel="Sí, desvincular Google"
+        isLoading={isUnlinkingGoogle}
+        onConfirm={() => void handleConfirmUnlinkGoogle()}
+        onCancel={() => !isUnlinkingGoogle && setConfirmUnlinkOpen(false)}
+      />
+
+      <PlanAdvisorBot
+        defaultName={user.nombre}
+        defaultEmail={user.correo}
+        context="billing"
       />
     </AppShell>
   );

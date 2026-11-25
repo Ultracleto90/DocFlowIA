@@ -22,3 +22,8 @@ export interface MeResponseDTO {
 export interface LogoutResponseDTO {
   message: string;
 }
+
+export interface UnlinkGoogleResponseDTO {
+  user: AuthUserProfile;
+  message: string;
+}

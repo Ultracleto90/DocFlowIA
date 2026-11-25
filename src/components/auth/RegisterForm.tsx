@@ -11,8 +11,9 @@ import {
   UserPlus,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { registerSchema } from '@/core/schemas';
@@ -28,6 +29,18 @@ interface FieldErrors {
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const nextParam = searchParams.get('next');
+  const planParam = searchParams.get('plan')?.toLowerCase();
+  const safeTarget =
+    nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')
+      ? nextParam
+      : planParam === 'enterprise'
+        ? '/billing?plan=enterprise'
+        : planParam === 'team' || planParam === 'team ia'
+          ? '/billing?plan=team'
+          : '/dashboard';
 
   const [nombre, setNombre] = useState('');
   const [correo, setCorreo] = useState('');
@@ -57,7 +70,7 @@ export function RegisterForm() {
     try {
       const response = await authPetitions.register(validation.data);
       setCreatedUser(response.user);
-      router.push('/dashboard');
+      router.push(safeTarget);
       router.refresh();
     } catch (err: unknown) {
       if (err instanceof HttpError) {
@@ -122,6 +135,15 @@ export function RegisterForm() {
           </span>
         </div>
       ) : null}
+
+      <div className="mb-4">
+        <GoogleAuthButton nextPath={safeTarget} label="Continuar con Google" />
+        <div className="mt-4 flex items-center gap-3 text-[11px] font-medium uppercase tracking-wider text-docuflow-slate">
+          <span className="h-px flex-1 bg-docuflow-border" />
+          <span>o regístrate con correo</span>
+          <span className="h-px flex-1 bg-docuflow-border" />
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div>
@@ -209,7 +231,7 @@ export function RegisterForm() {
       <div className="mt-6 flex items-center justify-between border-t border-docuflow-input pt-4 text-xs text-docuflow-slate">
         <span>¿Ya tienes cuenta?</span>
         <Link
-          href="/login"
+          href={safeTarget !== '/dashboard' ? `/login?next=${encodeURIComponent(safeTarget)}` : '/login'}
           className="font-semibold text-docuflow-action hover:underline"
         >
           Iniciar sesión

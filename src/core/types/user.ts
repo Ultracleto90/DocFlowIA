@@ -1,5 +1,8 @@
 import type { PlanDefinition, PlanName, UserRole } from '@/core/constants/plans';
 
+export const AUTH_PROVIDERS = ['local', 'google', 'hybrid'] as const;
+export type AuthProvider = (typeof AUTH_PROVIDERS)[number];
+
 export interface UserPlanEmbedded {
   nombre: PlanName;
   precio: number;
@@ -26,13 +29,17 @@ export interface UserRecord {
   plan: UserPlanEmbedded;
   is_active: boolean;
   created_at: string;
+  google_id?: string;
+  avatar_url?: string;
+  auth_provider: AuthProvider;
+  has_local_password: boolean;
   team_members?: TeamMember[];
   white_label?: WhiteLabelConfig;
   api_key?: string;
 }
 
 export interface UserWithPasswordRecord extends UserRecord {
-  password_hash: string;
+  password_hash?: string;
 }
 
 export interface AuthSessionPayload {

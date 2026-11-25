@@ -1,5 +1,6 @@
 import { ArrowRight, Check, Database, ShieldCheck, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { PlanAdvisorBot } from '@/components/advisor/PlanAdvisorBot';
 import { LandingFaqAccordion } from '@/components/landing/LandingFaqAccordion';
 import { LandingHero } from '@/components/landing/LandingHero';
 import { LandingNarrativeSection } from '@/components/landing/LandingNarrativeSection';
@@ -196,8 +197,10 @@ export default function HomePage() {
                     <Link
                       href={
                         isEnterprise
-                          ? '/register?plan=enterprise'
-                          : `/register?plan=${encodeURIComponent(plan.nombre)}`
+                          ? '/billing?plan=enterprise'
+                          : isTeam
+                            ? '/billing?plan=team'
+                            : `/register?plan=${encodeURIComponent(plan.nombre)}`
                       }
                       className={`mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-center text-xs font-semibold transition-all active:scale-[0.98] ${
                         isPro
@@ -268,6 +271,8 @@ export default function HomePage() {
           </span>
         </div>
       </footer>
+
+      <PlanAdvisorBot context="landing" />
     </div>
   );
 }

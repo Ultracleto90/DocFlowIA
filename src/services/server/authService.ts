@@ -101,6 +101,21 @@ export async function loginUser(
     throw new ServiceError(401, 'Credenciales inválidas o cuenta inactiva.');
   }
 
+  if (!userWithPassword.password_hash) {
+    await auditLogRepository.create({
+      usuario: normalizedEmail,
+      rol_bd: DB_ROLE_WRITE,
+      accion: 'LOGIN_FALLIDO',
+      entidad_afectada: 'usuarios',
+      direccion_ip: clientIp,
+      resultado: 'BLOQUEADO_UNAUTHORIZED',
+    });
+    throw new ServiceError(
+      401,
+      'Esta cuenta usa acceso con Google. Selecciona "Continuar con Google".',
+    );
+  }
+
   const isPasswordValid = await bcrypt.compare(
     input.password,
     userWithPassword.password_hash,

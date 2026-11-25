@@ -1,3 +1,4 @@
+export * from './advisor';
 export * from './audit';
 export * from './auth';
 export * from './billing';

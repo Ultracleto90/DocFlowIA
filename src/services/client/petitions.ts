@@ -2,6 +2,8 @@ import type { AuditResult, DocumentAuditState, PlanName } from '@/core/constants
 import type {
   AdminAuditResponseDTO,
   AuthResponseDTO,
+  CreatePlanRequestDTO,
+  CreatePlanRequestResponseDTO,
   CreateProjectResponseDTO,
   DeleteProjectResponseDTO,
   EnterpriseConfigRequestDTO,
@@ -9,16 +11,20 @@ import type {
   LoginRequestDTO,
   LogoutResponseDTO,
   MeResponseDTO,
+  MyPlanRequestsResponseDTO,
   PlansCatalogResponseDTO,
   ProjectDetailResponseDTO,
   ProjectListResponseDTO,
   RegisterRequestDTO,
   SaveWebhookRequestDTO,
   SaveWebhookResponseDTO,
+  ScheduleDemoRequestDTO,
+  ScheduleDemoResponseDTO,
   SubscribePlanRequestDTO,
   SubscribePlanResponseDTO,
   TeamInviteRequestDTO,
   TeamManageResponseDTO,
+  UnlinkGoogleResponseDTO,
   UpdateDocumentRequestDTO,
   UpdateDocumentResponseDTO,
   WhiteLabelConfig,
@@ -50,6 +56,10 @@ export const authPetitions = {
 
   me(): Promise<MeResponseDTO> {
     return basicGet<MeResponseDTO>('/api/auth/me');
+  },
+
+  unlinkGoogle(): Promise<UnlinkGoogleResponseDTO> {
+    return basicPost<UnlinkGoogleResponseDTO>('/api/auth/google/unlink');
   },
 };
 
@@ -151,6 +161,19 @@ export const billingPetitions = {
     );
   },
 
+  createPlanRequest(
+    payload: CreatePlanRequestDTO,
+  ): Promise<CreatePlanRequestResponseDTO> {
+    return basicPost<CreatePlanRequestResponseDTO, CreatePlanRequestDTO>(
+      '/api/billing/requests',
+      payload,
+    );
+  },
+
+  listMyPlanRequests(): Promise<MyPlanRequestsResponseDTO> {
+    return basicGet<MyPlanRequestsResponseDTO>('/api/billing/requests/me');
+  },
+
   manageTeam: {
     invite(payload: TeamInviteRequestDTO): Promise<TeamManageResponseDTO> {
       return basicPost<TeamManageResponseDTO, TeamInviteRequestDTO>(
@@ -164,6 +187,17 @@ export const billingPetitions = {
         params: { correo },
       });
     },
+  },
+};
+
+export const advisorPetitions = {
+  scheduleDemo(
+    payload: ScheduleDemoRequestDTO,
+  ): Promise<ScheduleDemoResponseDTO> {
+    return basicPost<ScheduleDemoResponseDTO, ScheduleDemoRequestDTO>(
+      '/api/advisor/schedule',
+      payload,
+    );
   },
 };
 

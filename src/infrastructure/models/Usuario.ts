@@ -5,6 +5,7 @@ import {
   type PlanName,
   type UserRole,
 } from '@/core/constants/plans';
+import { AUTH_PROVIDERS, type AuthProvider } from '@/core/types';
 
 export interface UsuarioPlanDoc {
   nombre: PlanName;
@@ -28,7 +29,10 @@ export interface UsuarioDoc {
   _id: Types.ObjectId;
   nombre: string;
   correo: string;
-  password_hash: string;
+  password_hash?: string;
+  google_id?: string;
+  avatar_url?: string;
+  auth_provider?: AuthProvider;
   rol: UserRole;
   plan: UsuarioPlanDoc;
   is_active: boolean;
@@ -75,7 +79,10 @@ export const UsuarioSchema = new Schema<UsuarioDoc>(
       lowercase: true,
       trim: true,
     },
-    password_hash: { type: String, required: true, select: false },
+    password_hash: { type: String, required: false, select: false },
+    google_id: { type: String, unique: true, sparse: true, trim: true },
+    avatar_url: { type: String, trim: true },
+    auth_provider: { type: String, enum: AUTH_PROVIDERS, default: 'local' },
     rol: { type: String, enum: USER_ROLES, default: 'Desarrollador' },
     plan: {
       type: PlanSubSchema,
