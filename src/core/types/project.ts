@@ -6,6 +6,19 @@ import type {
 } from '@/core/constants/plans';
 import type { PlanUsageSummary } from './user';
 
+export const FOLDER_ACCESS_ROLES = [
+  'lectura',
+  'edicion',
+  'validador',
+] as const;
+export type FolderAccessRole = (typeof FOLDER_ACCESS_ROLES)[number];
+
+export interface ProjectAccessPermission {
+  email: string;
+  rol_carpeta: FolderAccessRole;
+  assigned_at: string;
+}
+
 export interface ProjectRecord {
   id: string;
   codigo_proyecto: string;
@@ -16,6 +29,7 @@ export interface ProjectRecord {
   estado_procesamiento: ProcessingState;
   created_at?: string;
   webhook_url?: string;
+  permisos_acceso?: ProjectAccessPermission[];
 }
 
 export interface FilteredComponentRecord {
@@ -83,4 +97,16 @@ export interface UpdateDocumentRequestDTO {
 
 export interface UpdateDocumentResponseDTO {
   document: GeneratedDocumentRecord;
+}
+
+export interface UpdateProjectAccessRequestDTO {
+  permisos_acceso: Array<{
+    email: string;
+    rol_carpeta: FolderAccessRole;
+  }>;
+}
+
+export interface UpdateProjectAccessResponseDTO {
+  project: ProjectRecord;
+  message: string;
 }

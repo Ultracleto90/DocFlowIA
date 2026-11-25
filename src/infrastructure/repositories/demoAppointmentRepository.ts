@@ -1,5 +1,6 @@
 import type {
   DemoAppointmentRecord,
+  DemoAppointmentState,
   ScheduleDemoRequestDTO,
 } from '@/core/types';
 import {
@@ -59,5 +60,43 @@ export const demoAppointmentRepository = {
       .lean<CitaDemoDoc[]>();
 
     return docs.map(toDemoAppointmentRecord);
+  },
+
+  async findAll(limit: number = 100): Promise<DemoAppointmentRecord[]> {
+    const conn = await getWriteConnection();
+    const CitaDemo = getCitaDemoModel(conn);
+    const docs = await CitaDemo.find()
+      .sort({ created_at: -1 })
+      .limit(limit)
+      .lean<CitaDemoDoc[]>();
+
+    return docs.map(toDemoAppointmentRecord);
+  },
+
+  async findById(id: string): Promise<DemoAppointmentRecord | null> {
+    const conn = await getWriteConnection();
+    const CitaDemo = getCitaDemoModel(conn);
+    const doc = await CitaDemo.findById(id).lean<CitaDemoDoc | null>();
+    return doc ? toDemoAppointmentRecord(doc) : null;
+  },
+
+  async updateStatus(
+    id: string,
+    patch: { estado: DemoAppointmentState; notas?: string },
+  ): Promise<DemoAppointmentRecord | null> {
+    const conn = await getWriteConnection();
+    const CitaDemo = getCitaDemoModel(conn);
+    const setFields: Record<string, unknown> = { estado: patch.estado };
+    if (patch.notas !== undefined) {
+      setFields.notas = patch.notas.trim();
+    }
+
+    const updated = await CitaDemo.findByIdAndUpdate(
+      id,
+      { $set: setFields },
+      { new: true },
+    ).lean<CitaDemoDoc | null>();
+
+    return updated ? toDemoAppointmentRecord(updated) : null;
   },
 };

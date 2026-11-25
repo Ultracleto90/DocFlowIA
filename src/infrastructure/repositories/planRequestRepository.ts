@@ -92,4 +92,43 @@ export const planRequestRepository = {
 
     return docs.map(toPlanRequestRecord);
   },
+
+  async findAll(limit: number = 100): Promise<PlanRequestRecord[]> {
+    const conn = await getWriteConnection();
+    const SolicitudPlan = getSolicitudPlanModel(conn);
+
+    const docs = await SolicitudPlan.find()
+      .sort({ created_at: -1 })
+      .limit(limit)
+      .lean<SolicitudPlanDoc[]>();
+
+    return docs.map(toPlanRequestRecord);
+  },
+
+  async findById(id: string): Promise<PlanRequestRecord | null> {
+    const conn = await getWriteConnection();
+    const SolicitudPlan = getSolicitudPlanModel(conn);
+    const doc = await SolicitudPlan.findById(id).lean<SolicitudPlanDoc | null>();
+    return doc ? toPlanRequestRecord(doc) : null;
+  },
+
+  async updateDecision(
+    id: string,
+    patch: { estado: 'aprobada' | 'rechazada'; notas_admin: string },
+  ): Promise<PlanRequestRecord | null> {
+    const conn = await getWriteConnection();
+    const SolicitudPlan = getSolicitudPlanModel(conn);
+    const updated = await SolicitudPlan.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          estado: patch.estado,
+          notas_admin: patch.notas_admin.trim(),
+        },
+      },
+      { new: true },
+    ).lean<SolicitudPlanDoc | null>();
+
+    return updated ? toPlanRequestRecord(updated) : null;
+  },
 };

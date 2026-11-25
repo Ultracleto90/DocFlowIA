@@ -1,4 +1,12 @@
-import { ArrowRight, Check, Database, ShieldCheck, Sparkles } from 'lucide-react';
+import {
+  ArrowRight,
+  Check,
+  Database,
+  LayoutDashboard,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { PlanAdvisorBot } from '@/components/advisor/PlanAdvisorBot';
 import { LandingFaqAccordion } from '@/components/landing/LandingFaqAccordion';
@@ -10,8 +18,16 @@ import { StaggerGrid, StaggerItem } from '@/components/motion/MotionPrimitives';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { PLANS_LIST } from '@/core/constants/plans';
+import { AUTH_COOKIE_NAME, verifySessionToken } from '@/lib/auth/jwt';
 
-export default function HomePage() {
+export const dynamic = 'force-dynamic';
+
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+  const session = token ? await verifySessionToken(token) : null;
+  const isAuthenticated = Boolean(session);
+
   return (
     <div className="relative min-h-screen overflow-x-clip bg-docuflow-bg text-docuflow-navy">
       {/* Animated Nocturnal Sky + Topology Canvas */}
@@ -39,26 +55,39 @@ export default function HomePage() {
 
           <div className="flex items-center gap-2.5 sm:gap-3">
             <ThemeToggle />
-            <Link
-              href="/login"
-              className="rounded-xl border border-docuflow-border bg-docuflow-surface px-3.5 py-2 text-xs font-semibold text-docuflow-navy transition-all hover:bg-docuflow-elevated active:scale-[0.98]"
-            >
-              Iniciar sesión
-            </Link>
-            <Link
-              href="/register"
-              className="hidden items-center gap-1.5 rounded-xl bg-docuflow-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-docuflow-action active:scale-[0.98] sm:inline-flex"
-            >
-              <span>Comenzar gratis</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-docuflow-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-docuflow-action active:scale-[0.98]"
+              >
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                <span>Ir al Dashboard</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="rounded-xl border border-docuflow-border bg-docuflow-surface px-3.5 py-2 text-xs font-semibold text-docuflow-navy transition-all hover:bg-docuflow-elevated active:scale-[0.98]"
+                >
+                  Iniciar sesión
+                </Link>
+                <Link
+                  href="/register"
+                  className="hidden items-center gap-1.5 rounded-xl bg-docuflow-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-docuflow-action active:scale-[0.98] sm:inline-flex"
+                >
+                  <span>Comenzar gratis</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
 
       <main className="relative z-10">
         {/* 1. Immersive Nocturnal Hero */}
-        <LandingHero />
+        <LandingHero isAuthenticated={isAuthenticated} />
 
         {/* 2. Que es, Por que usarlo, Cuando usarlo */}
         <LandingNarrativeSection />
@@ -239,19 +268,32 @@ export default function HomePage() {
               Crea tu cuenta gratuita en segundos o inicia sesión para subir tu primer paquete .zip y revisar los borradores generados.
             </p>
             <div className="mt-7 flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/register"
-                className="inline-flex items-center gap-2 rounded-xl bg-docuflow-primary px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-docuflow-action active:scale-[0.98]"
-              >
-                <span>Crear cuenta Freemium</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/login"
-                className="rounded-xl border border-docuflow-border bg-docuflow-elevated px-6 py-3 text-sm font-semibold text-docuflow-navy transition-all hover:bg-docuflow-input active:scale-[0.98]"
-              >
-                Iniciar sesión
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center gap-2 rounded-xl bg-docuflow-primary px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-docuflow-action active:scale-[0.98]"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span>Ir al Dashboard</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center gap-2 rounded-xl bg-docuflow-primary px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-docuflow-action active:scale-[0.98]"
+                  >
+                    <span>Crear cuenta Freemium</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="rounded-xl border border-docuflow-border bg-docuflow-elevated px-6 py-3 text-sm font-semibold text-docuflow-navy transition-all hover:bg-docuflow-input active:scale-[0.98]"
+                  >
+                    Iniciar sesión
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </section>

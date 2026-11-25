@@ -17,16 +17,19 @@ import {
   Package,
   Search,
   ShieldCheck,
+  Users,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
+import { FolderAccessModal } from '@/components/projects/FolderAccessModal';
 import type {
   AuthUserProfile,
   FilesExplorerResponseDTO,
   ProjectFileCategory,
+  ProjectRecord,
   ProjectVirtualFileItem,
 } from '@/core/types';
 import { HttpError } from '@/lib/http/basicGet';
@@ -77,6 +80,9 @@ export function FilesExplorerClient() {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [aclModalProject, setAclModalProject] = useState<ProjectRecord | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -151,6 +157,21 @@ export function FilesExplorerClient() {
     } finally {
       setDownloadingId(null);
     }
+  }
+
+  function handleFolderProjectUpdated(updatedProject: ProjectRecord) {
+    setAclModalProject(updatedProject);
+    setExplorer((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        folders: prev.folders.map((folder) =>
+          folder.project.codigo_proyecto === updatedProject.codigo_proyecto
+            ? { ...folder, project: updatedProject }
+            : folder,
+        ),
+      };
+    });
   }
 
   const activeFolder = useMemo(() => {
@@ -378,21 +399,37 @@ export function FilesExplorerClient() {
                     </div>
                   </button>
 
-                  <button
-                    type="button"
-                    title={`Descargar Kit .zip de ${folder.project.codigo_proyecto}`}
-                    aria-label={`Descargar Kit .zip de ${folder.project.codigo_proyecto}`}
-                    disabled={downloadingId === `${folder.project.codigo_proyecto}:kit`}
-                    onClick={() =>
-                      void handleDownloadFile(
-                        folder.project.codigo_proyecto,
-                        folder.files[0],
-                      )
-                    }
-                    className="shrink-0 rounded-lg border border-docuflow-border bg-docuflow-surface p-1.5 text-docuflow-navy transition-colors hover:border-docuflow-cyan hover:text-docuflow-cyan disabled:opacity-50"
-                  >
-                    <Package className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      title={`Gestionar accesos de ${folder.project.codigo_proyecto}`}
+                      aria-label={`Gestionar accesos de ${folder.project.codigo_proyecto}`}
+                      onClick={() => setAclModalProject(folder.project)}
+                      className="rounded-lg border border-docuflow-border bg-docuflow-surface p-1.5 text-docuflow-navy transition-colors hover:border-docuflow-violet hover:text-docuflow-violet"
+                    >
+                      {user.plan.nombre === 'Team IA' ||
+                      user.plan.nombre === 'Enterprise' ? (
+                        <Users className="h-3.5 w-3.5" />
+                      ) : (
+                        <Lock className="h-3.5 w-3.5 text-docuflow-orange" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      title={`Descargar Kit .zip de ${folder.project.codigo_proyecto}`}
+                      aria-label={`Descargar Kit .zip de ${folder.project.codigo_proyecto}`}
+                      disabled={downloadingId === `${folder.project.codigo_proyecto}:kit`}
+                      onClick={() =>
+                        void handleDownloadFile(
+                          folder.project.codigo_proyecto,
+                          folder.files[0],
+                        )
+                      }
+                      className="rounded-lg border border-docuflow-border bg-docuflow-surface p-1.5 text-docuflow-navy transition-colors hover:border-docuflow-cyan hover:text-docuflow-cyan disabled:opacity-50"
+                    >
+                      <Package className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -417,6 +454,21 @@ export function FilesExplorerClient() {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAclModalProject(activeFolder.project)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-docuflow-border bg-docuflow-surface px-3 py-2 text-xs font-semibold text-docuflow-navy hover:border-docuflow-violet"
+                >
+                  {user.plan.nombre === 'Team IA' ||
+                  user.plan.nombre === 'Enterprise' ? (
+                    <Users className="h-3.5 w-3.5 text-docuflow-violet" />
+                  ) : (
+                    <Lock className="h-3.5 w-3.5 text-docuflow-orange" />
+                  )}
+                  <span>
+                    Accesos ({activeFolder.project.permisos_acceso?.length ?? 0})
+                  </span>
+                </button>
                 <Link
                   href={`/projects/${encodeURIComponent(activeFolder.project.codigo_proyecto)}`}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-docuflow-border bg-docuflow-surface px-3 py-2 text-xs font-semibold text-docuflow-navy hover:border-docuflow-primary"
@@ -533,6 +585,14 @@ export function FilesExplorerClient() {
           )}
         </section>
       </div>
+
+      <FolderAccessModal
+        open={aclModalProject !== null}
+        project={aclModalProject}
+        userPlan={user.plan.nombre}
+        onClose={() => setAclModalProject(null)}
+        onProjectUpdated={handleFolderProjectUpdated}
+      />
     </AppShell>
   );
 }

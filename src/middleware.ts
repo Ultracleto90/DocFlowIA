@@ -12,6 +12,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  if (pathname.startsWith('/admin/approvals') && session.rol !== 'Administrador') {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
   if (
     pathname.startsWith('/admin') &&
     session.rol !== 'Administrador' &&

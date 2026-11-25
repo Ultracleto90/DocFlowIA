@@ -6,10 +6,12 @@ import {
   Lock,
   ShieldCheck,
   Sparkles,
+  Users,
   Webhook,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
+import { FolderAccessPanel } from '@/components/projects/FolderAccessModal';
 import { webhookConfigSchema } from '@/core/schemas';
 import type {
   AuthUserProfile,
@@ -87,13 +89,13 @@ export function IntegrationAuditTab({
           Función disponible desde Plan Team IA ($999 MXN/mes)
         </p>
         <h3 className="mt-2 text-lg font-bold text-docuflow-navy">
-          Webhooks GitHub/GitLab y Auditoría Blade/WCAG 2.1 bloqueados
+          Webhooks GitHub/GitLab, ACL por Carpeta y Auditoría WCAG 2.1 bloqueados
         </h3>
         <p className="mx-auto mt-2 max-w-xl text-sm text-docuflow-slate">
-          Tu plan actual ({user.plan.nombre}) no incluye integración continua por Webhook ni auditoría avanzada WCAG 2.1 / OWASP. Actualiza a Team IA o Enterprise para desbloquear esta pestaña.
+          Tu plan actual ({user.plan.nombre}) no incluye integración continua por Webhook, control de accesos por carpeta (ACL) ni auditoría avanzada WCAG 2.1 / OWASP. Actualiza a Team IA o Enterprise para desbloquear esta pestaña.
         </p>
         <Link
-          href="/billing"
+          href="/billing?plan=team"
           className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-docuflow-violet px-5 py-2.5 text-xs font-semibold text-white hover:opacity-90"
         >
           <Sparkles className="h-4 w-4" />
@@ -104,7 +106,8 @@ export function IntegrationAuditTab({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-2">
       <section className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-6 shadow-sm">
         <h3 className="flex items-center gap-2 text-base font-bold text-docuflow-navy">
           <Webhook className="h-4 w-4 text-docuflow-primary" />
@@ -192,6 +195,26 @@ export function IntegrationAuditTab({
             </p>
           </div>
         </div>
+      </section>
+      </div>
+
+      {/* Folder ACL Panel */}
+      <section className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-6 shadow-sm">
+        <div className="mb-4">
+          <h3 className="flex items-center gap-2 text-base font-bold text-docuflow-navy">
+            <Users className="h-4 w-4 text-docuflow-cyan" />
+            <span>Gestionar Accesos de Carpeta (ACL)</span>
+          </h3>
+          <p className="mt-1 text-xs text-docuflow-slate">
+            Asigna o revoca permisos granulares (Solo lectura, Edición Markdown o Validador QA) sobre la carpeta aislada de {project.codigo_proyecto}.
+          </p>
+        </div>
+
+        <FolderAccessPanel
+          project={project}
+          userPlan={user.plan.nombre}
+          onProjectUpdated={onProjectUpdated}
+        />
       </section>
     </div>
   );

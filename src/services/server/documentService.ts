@@ -13,6 +13,7 @@ import { projectRepository } from '@/infrastructure/repositories/projectReposito
 import { ServiceError } from './errors';
 import { renderMarkdownToPdf } from './pdfRenderer';
 import { planGuardService } from './planGuardService';
+import { getUserProjectPermission } from './projectService';
 
 const DB_ROLE_WRITE = 'worker_ia_service';
 const FREEMIUM_WATERMARK =
@@ -40,6 +41,7 @@ async function loadAuthorizedDocument(
 ): Promise<{
   document: GeneratedDocumentRecord;
   projectName: string;
+  permission: 'owner_or_admin' | 'lectura' | 'edicion' | 'validador';
 }> {
   assertObjectId(documentId);
 
@@ -53,11 +55,9 @@ async function loadAuthorizedDocument(
     throw new ServiceError(404, 'Proyecto asociado no encontrado.');
   }
 
-  const hasAccess =
-    user.rol === 'Administrador' ||
-    project.usuario_correo.toLowerCase() === user.correo.toLowerCase();
+  const permission = getUserProjectPermission(user, project);
 
-  if (!hasAccess) {
+  if (!permission) {
     await auditLogRepository.create({
       usuario: user.correo,
       rol_bd: DB_ROLE_WRITE,
@@ -75,6 +75,7 @@ async function loadAuthorizedDocument(
   return {
     document,
     projectName: project.nombre_proyecto,
+    permission,
   };
 }
 
@@ -84,11 +85,30 @@ export async function updateDocumentForUser(params: {
   patch: UpdateDocumentRequestDTO;
   clientIp: string;
 }): Promise<GeneratedDocumentRecord> {
-  const { document } = await loadAuthorizedDocument(
+  const { document, permission } = await loadAuthorizedDocument(
     params.user,
     params.documentId,
     params.clientIp,
   );
+
+  if (
+    permission === 'lectura' ||
+    (params.patch.contenido_markdown !== undefined &&
+      permission === 'validador')
+  ) {
+    await auditLogRepository.create({
+      usuario: params.user.correo,
+      rol_bd: DB_ROLE_WRITE,
+      accion: 'INTENTO_EDICION_DOCUMENTO',
+      entidad_afectada: `documentos_generados (${document.codigo_proyecto})`,
+      direccion_ip: params.clientIp,
+      resultado: 'BLOQUEADO_UNAUTHORIZED',
+    });
+    throw new ServiceError(
+      403,
+      'Tu rol en esta carpeta no permite modificar el contenido del documento.',
+    );
+  }
 
   const updated = await documentRepository.updateById(
     params.documentId,

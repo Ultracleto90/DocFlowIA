@@ -67,3 +67,20 @@ export const createPlanRequestSchema = z.object({
     .max(5, 'Team IA permite hasta 5 invitados iniciales.')
     .optional(),
 });
+
+export const mongoObjectIdParamSchema = z.object({
+  id: z
+    .string()
+    .trim()
+    .regex(/^[a-fA-F0-9]{24}$/, 'Identificador inválido.'),
+});
+
+export const reviewPlanRequestSchema = z.object({
+  estado: z.enum(['aprobada', 'rechazada']),
+  notas_admin: z.string().trim().max(600).optional().default(''),
+});
+
+export const updateDemoStatusSchema = z.object({
+  estado: z.enum(['pendiente', 'confirmada', 'completada', 'cancelada']),
+  notas: z.string().trim().max(600).optional(),
+});

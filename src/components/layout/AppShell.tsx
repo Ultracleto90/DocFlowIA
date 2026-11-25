@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  ClipboardCheck,
   Cpu,
   CreditCard,
   FolderTree,
@@ -30,8 +31,8 @@ export function AppShell({ user, children }: AppShellProps) {
   const enterpriseWhiteLabel =
     user.plan.nombre === 'Enterprise' ? user.white_label : null;
 
-  const canSeeAudit =
-    user.rol === 'Administrador' || user.plan.nombre === 'Enterprise';
+  const isAdmin = user.rol === 'Administrador';
+  const canSeeAudit = isAdmin || user.plan.nombre === 'Enterprise';
 
   const navItems = [
     {
@@ -52,12 +53,22 @@ export function AppShell({ user, children }: AppShellProps) {
       match: '/billing',
       icon: CreditCard,
     },
+    ...(isAdmin
+      ? [
+          {
+            href: '/admin/approvals',
+            label: 'Aprobaciones',
+            match: '/admin/approvals',
+            icon: ClipboardCheck,
+          },
+        ]
+      : []),
     ...(canSeeAudit
       ? [
           {
             href: '/admin/audit',
             label: 'Bitácora QA',
-            match: '/admin',
+            match: '/admin/audit',
             icon: ShieldAlert,
           },
         ]

@@ -1,5 +1,5 @@
 import type { ProcessingState } from '@/core/constants/plans';
-import type { ProjectRecord } from '@/core/types';
+import type { FolderAccessRole, ProjectRecord } from '@/core/types';
 import { getProyectoModel, type ProyectoDoc } from '@/infrastructure/models/Proyecto';
 import { getWriteConnection } from '@/lib/db/mongodb';
 
@@ -21,6 +21,18 @@ function toProjectRecord(doc: ProyectoDoc): ProjectRecord {
         }
       : {}),
     ...(doc.webhook_url ? { webhook_url: doc.webhook_url } : {}),
+    ...(doc.permisos_acceso
+      ? {
+          permisos_acceso: doc.permisos_acceso.map((entry) => ({
+            email: entry.email,
+            rol_carpeta: entry.rol_carpeta,
+            assigned_at:
+              entry.assigned_at instanceof Date
+                ? entry.assigned_at.toISOString()
+                : new Date(entry.assigned_at).toISOString(),
+          })),
+        }
+      : {}),
   };
 }
 
@@ -47,8 +59,12 @@ export const projectRepository = {
   async findByUserEmail(correo: string): Promise<ProjectRecord[]> {
     const conn = await getWriteConnection();
     const Proyecto = getProyectoModel(conn);
+    const normalized = correo.toLowerCase().trim();
     const docs = await Proyecto.find({
-      usuario_correo: correo.toLowerCase().trim(),
+      $or: [
+        { usuario_correo: normalized },
+        { 'permisos_acceso.email': normalized },
+      ],
     })
       .sort({ created_at: -1, _id: -1 })
       .lean<ProyectoDoc[]>();
@@ -149,6 +165,25 @@ export const projectRepository = {
     const updated = await Proyecto.findOneAndUpdate(
       { codigo_proyecto },
       { $set: { webhook_url } },
+      { new: true },
+    ).lean<ProyectoDoc | null>();
+
+    return updated ? toProjectRecord(updated) : null;
+  },
+
+  async updateAccessPermissions(
+    codigo_proyecto: string,
+    permisos_acceso: Array<{
+      email: string;
+      rol_carpeta: FolderAccessRole;
+      assigned_at: Date;
+    }>,
+  ): Promise<ProjectRecord | null> {
+    const conn = await getWriteConnection();
+    const Proyecto = getProyectoModel(conn);
+    const updated = await Proyecto.findOneAndUpdate(
+      { codigo_proyecto },
+      { $set: { permisos_acceso } },
       { new: true },
     ).lean<ProyectoDoc | null>();
 

@@ -42,5 +42,20 @@ export const bundleQuerySchema = z.object({
     .default('kit'),
 });
 
+export const folderAccessEntrySchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .email('Ingresa un correo electrónico válido.')
+    .max(160),
+  rol_carpeta: z.enum(['lectura', 'edicion', 'validador']),
+});
+
+export const updateProjectAccessSchema = z.object({
+  permisos_acceso: z
+    .array(folderAccessEntrySchema)
+    .max(50, 'Se permiten hasta 50 permisos por carpeta.'),
+});
+
 export type CreateProjectMetaInput = z.infer<typeof createProjectMetaSchema>;
 export type WebhookConfigInput = z.infer<typeof webhookConfigSchema>;

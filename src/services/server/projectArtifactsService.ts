@@ -15,6 +15,7 @@ import { auditLogRepository } from '@/infrastructure/repositories/auditLogReposi
 import { documentRepository } from '@/infrastructure/repositories/documentRepository';
 import { projectRepository } from '@/infrastructure/repositories/projectRepository';
 import { ServiceError } from './errors';
+import { getUserProjectPermission } from './projectService';
 import { ensureProjectTopology } from './topologyService';
 
 const DB_ROLE_WRITE = 'worker_ia_service';
@@ -22,10 +23,7 @@ const FREEMIUM_WATERMARK =
   '\n---\n*Generado con DocuFlow AI (Plan Freemium Explorer)*';
 
 function assertProjectAccess(user: UserRecord, project: ProjectRecord): boolean {
-  return (
-    user.rol === 'Administrador' ||
-    project.usuario_correo.toLowerCase() === user.correo.toLowerCase()
-  );
+  return getUserProjectPermission(user, project) !== null;
 }
 
 function slugifyType(tipo: string): string {

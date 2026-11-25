@@ -1,19 +1,15 @@
 'use client';
 
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
-import {
-  ArrowRight,
-  CheckCircle2,
-  EyeOff,
-  FileCode2,
-  Filter,
-  RotateCcw,
-  ShieldCheck,
-} from 'lucide-react';
+import { ArrowRight, CheckCircle2, EyeOff, FileCode2, Filter, LayoutDashboard, RotateCcw, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 
-export function LandingHero() {
+interface LandingHeroProps {
+  isAuthenticated?: boolean;
+}
+
+export function LandingHero({ isAuthenticated = false }: LandingHeroProps) {
   const heroRef = useRef<HTMLElement | null>(null);
   const shouldReduceMotion = useReducedMotion();
   const [previewState, setPreviewState] = useState<'borrador_ia' | 'validado_humano'>(
@@ -60,20 +56,33 @@ export function LandingHero() {
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-4">
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-2 rounded-xl bg-docuflow-primary px-6 py-3.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-docuflow-action active:scale-[0.98]"
-            >
-              <span>Comenzar como Revisor</span>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-2 rounded-xl bg-docuflow-primary px-6 py-3.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-docuflow-action active:scale-[0.98]"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                <span>Ir al Dashboard</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-2 rounded-xl bg-docuflow-primary px-6 py-3.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-docuflow-action active:scale-[0.98]"
+                >
+                  <span>Comenzar como Revisor</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
 
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-xl border border-docuflow-border bg-docuflow-surface/90 px-6 py-3.5 text-sm font-semibold text-docuflow-navy transition-all hover:bg-docuflow-elevated active:scale-[0.98]"
-            >
-              <span>Iniciar sesión</span>
-            </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 rounded-xl border border-docuflow-border bg-docuflow-surface/90 px-6 py-3.5 text-sm font-semibold text-docuflow-navy transition-all hover:bg-docuflow-elevated active:scale-[0.98]"
+                >
+                  <span>Iniciar sesión</span>
+                </Link>
+              </>
+            )}
           </div>
 
           <dl className="mt-10 grid max-w-xl grid-cols-3 gap-4 border-t border-docuflow-border/70 pt-6 text-xs">

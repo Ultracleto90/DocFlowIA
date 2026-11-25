@@ -1,5 +1,6 @@
 import type { AuditResult, DocumentAuditState, PlanName } from '@/core/constants/plans';
 import type {
+  AdminApprovalsResponseDTO,
   AdminAuditResponseDTO,
   AuthResponseDTO,
   BundleArtifactKey,
@@ -20,6 +21,8 @@ import type {
   ProjectSecurityResponseDTO,
   ProjectTopologyResponseDTO,
   RegisterRequestDTO,
+  ReviewPlanRequestDTO,
+  ReviewPlanRequestResponseDTO,
   SaveWebhookRequestDTO,
   SaveWebhookResponseDTO,
   ScheduleDemoRequestDTO,
@@ -29,8 +32,12 @@ import type {
   TeamInviteRequestDTO,
   TeamManageResponseDTO,
   UnlinkGoogleResponseDTO,
+  UpdateDemoStatusRequestDTO,
+  UpdateDemoStatusResponseDTO,
   UpdateDocumentRequestDTO,
   UpdateDocumentResponseDTO,
+  UpdateProjectAccessRequestDTO,
+  UpdateProjectAccessResponseDTO,
   WhiteLabelConfig,
 } from '@/core/types';
 import { basicGet } from '@/lib/http/basicGet';
@@ -128,6 +135,16 @@ export const projectPetitions = {
       filename,
       { params: { artifact } },
     );
+  },
+
+  updateAccess(
+    codigo: string,
+    payload: UpdateProjectAccessRequestDTO,
+  ): Promise<UpdateProjectAccessResponseDTO> {
+    return basicPatch<
+      UpdateProjectAccessResponseDTO,
+      UpdateProjectAccessRequestDTO
+    >(`/api/projects/${encodeURIComponent(codigo)}/access`, payload);
   },
 };
 
@@ -253,5 +270,31 @@ export const auditPetitions = {
 
   getMetrics(): Promise<AdminAuditResponseDTO> {
     return basicGet<AdminAuditResponseDTO>('/api/admin/audit');
+  },
+};
+
+export const adminApprovalsPetitions = {
+  list(): Promise<AdminApprovalsResponseDTO> {
+    return basicGet<AdminApprovalsResponseDTO>('/api/admin/approvals');
+  },
+
+  reviewRequest(
+    id: string,
+    payload: ReviewPlanRequestDTO,
+  ): Promise<ReviewPlanRequestResponseDTO> {
+    return basicPatch<ReviewPlanRequestResponseDTO, ReviewPlanRequestDTO>(
+      `/api/admin/approvals/requests/${encodeURIComponent(id)}`,
+      payload,
+    );
+  },
+
+  updateDemo(
+    id: string,
+    payload: UpdateDemoStatusRequestDTO,
+  ): Promise<UpdateDemoStatusResponseDTO> {
+    return basicPatch<UpdateDemoStatusResponseDTO, UpdateDemoStatusRequestDTO>(
+      `/api/admin/approvals/demos/${encodeURIComponent(id)}`,
+      payload,
+    );
   },
 };

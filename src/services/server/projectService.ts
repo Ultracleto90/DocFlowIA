@@ -2,9 +2,11 @@ import fs from 'node:fs/promises';
 import type {
   CreateProjectResponseDTO,
   DeleteProjectResponseDTO,
+  FolderAccessRole,
   ProjectDetailResponseDTO,
   ProjectListResponseDTO,
   ProjectRecord,
+  UpdateProjectAccessResponseDTO,
   UserRecord,
 } from '@/core/types';
 import { auditLogRepository } from '@/infrastructure/repositories/auditLogRepository';
@@ -18,11 +20,26 @@ import { planGuardService } from './planGuardService';
 
 const DB_ROLE_WRITE = 'worker_ia_service';
 
-function assertProjectAccess(user: UserRecord, project: ProjectRecord): boolean {
-  return (
+export function getUserProjectPermission(
+  user: UserRecord,
+  project: ProjectRecord,
+): 'owner_or_admin' | FolderAccessRole | null {
+  if (
     user.rol === 'Administrador' ||
     project.usuario_correo.toLowerCase() === user.correo.toLowerCase()
+  ) {
+    return 'owner_or_admin';
+  }
+
+  const normalizedEmail = user.correo.toLowerCase().trim();
+  const aclEntry = project.permisos_acceso?.find(
+    (entry) => entry.email.toLowerCase() === normalizedEmail,
   );
+  return aclEntry ? aclEntry.rol_carpeta : null;
+}
+
+function assertProjectAccess(user: UserRecord, project: ProjectRecord): boolean {
+  return getUserProjectPermission(user, project) !== null;
 }
 
 export async function listProjectsForUser(
@@ -121,7 +138,10 @@ export async function deleteProjectForUser(
     throw new ServiceError(404, `El proyecto ${codigoProyecto} no existe.`);
   }
 
-  if (!assertProjectAccess(user, project)) {
+  if (
+    user.rol !== 'Administrador' &&
+    project.usuario_correo.toLowerCase() !== user.correo.toLowerCase()
+  ) {
     await auditLogRepository.create({
       usuario: user.correo,
       rol_bd: DB_ROLE_WRITE,
@@ -179,7 +199,10 @@ export async function updateProjectWebhook(
     throw new ServiceError(404, `El proyecto ${codigoProyecto} no existe.`);
   }
 
-  if (!assertProjectAccess(user, existing)) {
+  if (
+    user.rol !== 'Administrador' &&
+    existing.usuario_correo.toLowerCase() !== user.correo.toLowerCase()
+  ) {
     throw new ServiceError(403, 'No tienes permisos para modificar este proyecto.');
   }
 
@@ -201,4 +224,97 @@ export async function updateProjectWebhook(
   });
 
   return updated;
+}
+
+export async function updateProjectAccessForUser(params: {
+  user: UserRecord;
+  codigoProyecto: string;
+  permisos_acceso: Array<{ email: string; rol_carpeta: FolderAccessRole }>;
+  clientIp: string;
+}): Promise<UpdateProjectAccessResponseDTO> {
+  const existing = await projectRepository.findByCode(params.codigoProyecto);
+  if (!existing) {
+    throw new ServiceError(
+      404,
+      `El proyecto ${params.codigoProyecto} no existe.`,
+    );
+  }
+
+  const permission = getUserProjectPermission(params.user, existing);
+  if (permission !== 'owner_or_admin') {
+    await auditLogRepository.create({
+      usuario: params.user.correo,
+      rol_bd: DB_ROLE_WRITE,
+      accion: 'ACTUALIZAR_ACCESOS_CARPETA',
+      entidad_afectada: `proyectos (${params.codigoProyecto})`,
+      direccion_ip: params.clientIp,
+      resultado: 'BLOQUEADO_UNAUTHORIZED',
+    });
+    throw new ServiceError(
+      403,
+      'Solo el propietario o un Administrador puede modificar los permisos de esta carpeta.',
+    );
+  }
+
+  const plan = params.user.plan.nombre;
+  if (plan !== 'Team IA' && plan !== 'Enterprise') {
+    await auditLogRepository.create({
+      usuario: params.user.correo,
+      rol_bd: DB_ROLE_WRITE,
+      accion: 'ACTUALIZAR_ACCESOS_CARPETA',
+      entidad_afectada: `proyectos (${params.codigoProyecto})`,
+      direccion_ip: params.clientIp,
+      resultado: 'BLOQUEADO_UNAUTHORIZED',
+    });
+    throw new ServiceError(
+      403,
+      'El control de accesos por carpeta (ACL) está disponible exclusivamente en Team IA y Enterprise.',
+    );
+  }
+
+  const existingDates = new Map<string, Date>();
+  for (const prev of existing.permisos_acceso ?? []) {
+    existingDates.set(prev.email.toLowerCase(), new Date(prev.assigned_at));
+  }
+
+  const ownerEmail = existing.usuario_correo.toLowerCase();
+  const deduped = new Map<
+    string,
+    { email: string; rol_carpeta: FolderAccessRole; assigned_at: Date }
+  >();
+
+  for (const item of params.permisos_acceso) {
+    const email = item.email.toLowerCase().trim();
+    if (!email || email === ownerEmail) continue;
+    deduped.set(email, {
+      email,
+      rol_carpeta: item.rol_carpeta,
+      assigned_at: existingDates.get(email) ?? new Date(),
+    });
+  }
+
+  const updated = await projectRepository.updateAccessPermissions(
+    existing.codigo_proyecto,
+    Array.from(deduped.values()),
+  );
+  if (!updated) {
+    throw new ServiceError(
+      404,
+      `El proyecto ${params.codigoProyecto} no existe.`,
+    );
+  }
+
+  await auditLogRepository.create({
+    usuario: params.user.correo,
+    rol_bd: DB_ROLE_WRITE,
+    accion: 'ACTUALIZAR_ACCESOS_CARPETA',
+    entidad_afectada: `proyectos (${existing.codigo_proyecto})`,
+    direccion_ip: params.clientIp,
+    resultado: 'EXITOSO',
+  });
+
+  return {
+    project: updated,
+    message: `Permisos de carpeta actualizados (${deduped.size} colaborador(es)).`,
+  };
 }

@@ -7,6 +7,7 @@ export const DEMO_APPOINTMENT_STATES = [
   'pendiente',
   'confirmada',
   'completada',
+  'cancelada',
 ] as const;
 export type DemoAppointmentState = (typeof DEMO_APPOINTMENT_STATES)[number];
 
@@ -80,4 +81,29 @@ export interface CreatePlanRequestResponseDTO {
 
 export interface MyPlanRequestsResponseDTO {
   requests: PlanRequestRecord[];
+}
+
+export interface AdminApprovalsResponseDTO {
+  requests: PlanRequestRecord[];
+  demos: DemoAppointmentRecord[];
+}
+
+export interface ReviewPlanRequestDTO {
+  estado: 'aprobada' | 'rechazada';
+  notas_admin?: string;
+}
+
+export interface ReviewPlanRequestResponseDTO {
+  request: PlanRequestRecord;
+  message: string;
+}
+
+export interface UpdateDemoStatusRequestDTO {
+  estado: DemoAppointmentState;
+  notas?: string;
+}
+
+export interface UpdateDemoStatusResponseDTO {
+  appointment: DemoAppointmentRecord;
+  message: string;
 }

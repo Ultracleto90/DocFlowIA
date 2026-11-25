@@ -10,7 +10,7 @@ import type { AuthSessionPayload } from '@/core/types';
 export const AUTH_COOKIE_NAME = 'docuflow_session';
 
 const DEFAULT_EXPIRES_IN = '7d';
-const SEVEN_DAYS_SECONDS = 60 * 60 * 24 * 7;
+export const SEVEN_DAYS_SECONDS = 60 * 60 * 24 * 7;
 
 function getJwtSecretBytes(): Uint8Array {
   const secret = process.env.JWT_SECRET;
@@ -21,8 +21,12 @@ function getJwtSecretBytes(): Uint8Array {
 }
 
 export function getAuthCookieOptions(maxAgeSeconds: number = SEVEN_DAYS_SECONDS) {
-  const appUrl = process.env.APP_URL ?? '';
+  const appUrl = process.env.APP_URL?.trim() ?? '';
   const isHttps = appUrl.startsWith('https://');
+  const expires =
+    maxAgeSeconds > 0
+      ? new Date(Date.now() + maxAgeSeconds * 1000)
+      : new Date(0);
 
   return {
     httpOnly: true,
@@ -30,6 +34,7 @@ export function getAuthCookieOptions(maxAgeSeconds: number = SEVEN_DAYS_SECONDS)
     secure: isHttps,
     path: '/',
     maxAge: maxAgeSeconds,
+    expires,
   };
 }
 
