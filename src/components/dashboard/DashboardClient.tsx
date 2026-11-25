@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import {
   AlertCircle,
   ArrowRight,
@@ -23,6 +24,8 @@ import type {
   ProjectRecord,
 } from '@/core/types';
 import { AppShell } from '@/components/layout/AppShell';
+import { StaggerGrid, StaggerItem } from '@/components/motion/MotionPrimitives';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { HttpError } from '@/lib/http/basicGet';
 import { authPetitions, projectPetitions } from '@/services/client/petitions';
 import { FreemiumAdBanner } from './FreemiumAdBanner';
@@ -58,6 +61,8 @@ export function DashboardClient() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [deletingCode, setDeletingCode] = useState<string | null>(null);
+  const [pendingDeleteProject, setPendingDeleteProject] =
+    useState<ProjectRecord | null>(null);
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
@@ -89,11 +94,14 @@ export function DashboardClient() {
     void loadDashboard();
   }, [loadDashboard]);
 
-  async function handleDeleteProject(codigo: string) {
+  async function handleConfirmDeleteProject() {
+    if (!pendingDeleteProject) return;
+    const codigo = pendingDeleteProject.codigo_proyecto;
     setDeletingCode(codigo);
     setErrorMessage(null);
     try {
       await projectPetitions.delete(codigo);
+      setPendingDeleteProject(null);
       setToastMessage(`Proyecto ${codigo} eliminado correctamente.`);
       await loadDashboard();
     } catch (err: unknown) {
@@ -178,7 +186,7 @@ export function DashboardClient() {
         <button
           type="button"
           onClick={() => setIsUploadOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-docuflow-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-docuflow-action"
+          className="inline-flex items-center gap-2 rounded-xl bg-docuflow-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-docuflow-action active:scale-[0.98]"
         >
           <Plus className="h-4 w-4" />
           <span>Nuevo Proyecto Laravel (.zip)</span>
@@ -186,8 +194,8 @@ export function DashboardClient() {
       </div>
 
       {/* Quota & Plan Metrics */}
-      <div className="mb-8 grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
+      <StaggerGrid className="mb-8 grid gap-4 md:grid-cols-3">
+        <StaggerItem className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
           <div className="flex items-center justify-between text-xs font-semibold text-docuflow-slate">
             <span className="flex items-center gap-1.5">
               <Gauge className="h-4 w-4 text-docuflow-cyan" />
@@ -208,9 +216,9 @@ export function DashboardClient() {
           <p className="mt-2 text-xs text-docuflow-slate">
             {activeUsage.restantes_mes} proyectos disponibles este mes
           </p>
-        </div>
+        </StaggerItem>
 
-        <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
+        <StaggerItem className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate">
             <Sparkles className="h-4 w-4 text-docuflow-violet" />
             Inteligencia Activa ({user.plan_details.nivel_ia})
@@ -221,9 +229,9 @@ export function DashboardClient() {
           <p className="mt-1 text-xs text-docuflow-slate">
             {user.plan_details.entregables.length} entregable(s) desbloqueado(s)
           </p>
-        </div>
+        </StaggerItem>
 
-        <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
+        <StaggerItem className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate">
             <HardDrive className="h-4 w-4 text-docuflow-primary" />
             Capacidad de Ingesta y Almacenamiento
@@ -234,8 +242,8 @@ export function DashboardClient() {
           <p className="mt-1 text-xs text-docuflow-slate">
             {user.plan_details.almacenamiento_gb} GB asignados ({user.plan_details.pdf_habilitado ? 'MD + PDF limpio' : 'Solo .md con firma'})
           </p>
-        </div>
-      </div>
+        </StaggerItem>
+      </StaggerGrid>
 
       {/* Projects Table */}
       <section className="overflow-hidden rounded-2xl border border-docuflow-input bg-docuflow-surface shadow-sm">
@@ -276,11 +284,18 @@ export function DashboardClient() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-docuflow-input">
-                {projects.map((project) => {
+                {projects.map((project, index) => {
                   const badge = STATUS_BADGES[project.estado_procesamiento];
                   return (
-                    <tr
+                    <motion.tr
                       key={project.codigo_proyecto}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.18,
+                        delay: Math.min(index * 0.04, 0.25),
+                        ease: 'easeOut',
+                      }}
                       className="transition-colors hover:bg-docuflow-bg/30"
                     >
                       <td className="px-6 py-4 font-mono text-xs font-bold text-docuflow-primary">
@@ -306,18 +321,16 @@ export function DashboardClient() {
                         <div className="inline-flex items-center gap-2">
                           <Link
                             href={`/projects/${project.codigo_proyecto}`}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-docuflow-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-docuflow-action"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-docuflow-primary px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-docuflow-action active:scale-[0.98]"
                           >
                             <span>Abrir Workspace</span>
                             <ExternalLink className="h-3.5 w-3.5" />
                           </Link>
                           <button
                             type="button"
-                            onClick={() =>
-                              void handleDeleteProject(project.codigo_proyecto)
-                            }
+                            onClick={() => setPendingDeleteProject(project)}
                             disabled={deletingCode === project.codigo_proyecto}
-                            className="inline-flex items-center gap-1 rounded-lg border border-docuflow-input px-3 py-1.5 text-xs font-semibold text-docuflow-slate hover:border-docuflow-orange hover:text-docuflow-orange disabled:opacity-50"
+                            className="inline-flex items-center gap-1 rounded-lg border border-docuflow-input px-3 py-1.5 text-xs font-semibold text-docuflow-slate transition-all hover:border-docuflow-orange hover:text-docuflow-orange active:scale-[0.98] disabled:opacity-50"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             <span>
@@ -328,7 +341,7 @@ export function DashboardClient() {
                           </button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   );
                 })}
               </tbody>
@@ -342,6 +355,24 @@ export function DashboardClient() {
         user={user}
         onClose={() => setIsUploadOpen(false)}
         onSuccess={handleUploadSuccess}
+      />
+
+      <ConfirmDialog
+        open={pendingDeleteProject !== null}
+        title={
+          pendingDeleteProject
+            ? `Eliminar proyecto ${pendingDeleteProject.codigo_proyecto}`
+            : 'Eliminar proyecto'
+        }
+        description={
+          pendingDeleteProject
+            ? `Esta acción eliminará "${pendingDeleteProject.nombre_proyecto}", sus componentes SVM y sus documentos generados. Si no estás seguro, haz clic en Cancelar.`
+            : ''
+        }
+        confirmLabel="Sí, eliminar proyecto"
+        isLoading={deletingCode !== null}
+        onConfirm={() => void handleConfirmDeleteProject()}
+        onCancel={() => !deletingCode && setPendingDeleteProject(null)}
       />
     </AppShell>
   );

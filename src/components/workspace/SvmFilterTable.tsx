@@ -58,7 +58,7 @@ export function SvmFilterTable({ components }: SvmFilterTableProps) {
             onClick={() => setFilter('relevant')}
             className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
               filter === 'relevant'
-                ? 'bg-docuflow-cyan text-docuflow-navy'
+                ? 'bg-docuflow-cyan text-slate-950'
                 : 'bg-docuflow-input text-docuflow-slate hover:text-docuflow-navy'
             }`}
           >

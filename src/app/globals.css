@@ -2,8 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --df-bg: 235 242 250;
+  --df-surface: 255 255 255;
+  --df-elevated: 244 248 253;
+  --df-input: 220 231 243;
+  --df-border: 200 216 234;
+  --df-primary: 31 67 140;
+  --df-action: 29 91 184;
+  --df-navy: 11 31 58;
+  --df-slate: 74 94 120;
+  --df-cyan: 8 145 178;
+  --df-violet: 79 70 229;
+  --df-orange: 217 119 6;
+}
+
+.dark {
+  --df-bg: 5 11 24;
+  --df-surface: 11 21 40;
+  --df-elevated: 17 32 59;
+  --df-input: 17 32 59;
+  --df-border: 28 50 87;
+  --df-primary: 43 92 230;
+  --df-action: 75 123 255;
+  --df-navy: 237 244 255;
+  --df-slate: 147 168 198;
+  --df-cyan: 34 211 238;
+  --df-violet: 99 102 241;
+  --df-orange: 245 158 11;
+}
+
 @layer base {
-  body {
-    @apply bg-docuflow-bg text-docuflow-navy antialiased;
+  html {
+    scroll-behavior: smooth;
   }
+
+  body {
+    @apply bg-docuflow-bg font-sans text-docuflow-navy antialiased transition-colors duration-200;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), system-ui, sans-serif;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background-color: rgb(var(--df-cyan) / 0.28);
+    color: rgb(var(--df-navy));
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--df-cyan));
+    outline-offset: 2px;
+  }
+}
+
+/* Ensure readable high-contrast primary/indigo text tokens on nocturnal surfaces */
+.dark .text-docuflow-primary {
+  color: #7ba8ff;
+}
+
+.dark .text-docuflow-violet {
+  color: #a5b4fc;
+}
+
+.dark .text-docuflow-action {
+  color: #60a5fa;
 }

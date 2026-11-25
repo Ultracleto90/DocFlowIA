@@ -1,7 +1,9 @@
 'use client';
 
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowLeft,
+  ChevronRight,
   FileText,
   Filter,
   FolderArchive,
@@ -138,6 +140,22 @@ export function ProjectWorkspaceClient({
 
   return (
     <AppShell user={user}>
+      {/* Breadcrumbs */}
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-4 flex items-center gap-1.5 text-xs font-medium text-docuflow-slate"
+      >
+        <Link href="/dashboard" className="hover:text-docuflow-primary">
+          Dashboard
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span>Proyectos</span>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span className="font-semibold text-docuflow-navy">
+          {project.codigo_proyecto}
+        </span>
+      </nav>
+
       {/* Workspace Header */}
       <div className="mb-6 flex flex-col justify-between gap-4 rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm sm:flex-row sm:items-center">
         <div>
@@ -184,41 +202,60 @@ export function ProjectWorkspaceClient({
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
+              className={`relative flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all active:scale-[0.98] ${
                 isActive
-                  ? 'bg-docuflow-primary text-white shadow-sm'
+                  ? 'text-white'
                   : 'bg-docuflow-surface text-docuflow-slate hover:text-docuflow-navy'
               }`}
             >
-              {isLockedIntegration ? (
-                <Lock className="h-3.5 w-3.5 text-docuflow-orange" />
-              ) : (
-                <Icon className="h-3.5 w-3.5" />
-              )}
-              <span>{tab.label}</span>
+              {isActive ? (
+                <motion.span
+                  layoutId="workspaceActiveTab"
+                  transition={{ type: 'spring', stiffness: 440, damping: 34 }}
+                  className="absolute inset-0 rounded-xl bg-docuflow-primary shadow-sm"
+                />
+              ) : null}
+              <span className="relative z-10 flex items-center gap-1.5">
+                {isLockedIntegration ? (
+                  <Lock className="h-3.5 w-3.5 text-docuflow-orange" />
+                ) : (
+                  <Icon className="h-3.5 w-3.5" />
+                )}
+                <span>{tab.label}</span>
+              </span>
             </button>
           );
         })}
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'docs' ? (
-        <DocumentSplitEditor
-          codigoProyecto={project.codigo_proyecto}
-          user={user}
-          documents={documents}
-          onDocumentUpdated={handleDocumentUpdated}
-        />
-      ) : activeTab === 'svm' ? (
-        <SvmFilterTable components={components} />
-      ) : (
-        <IntegrationAuditTab
-          user={user}
-          project={project}
-          components={components}
-          onProjectUpdated={(updated) => setProject(updated)}
-        />
-      )}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+        >
+          {activeTab === 'docs' ? (
+            <DocumentSplitEditor
+              codigoProyecto={project.codigo_proyecto}
+              user={user}
+              documents={documents}
+              onDocumentUpdated={handleDocumentUpdated}
+            />
+          ) : activeTab === 'svm' ? (
+            <SvmFilterTable components={components} />
+          ) : (
+            <IntegrationAuditTab
+              user={user}
+              project={project}
+              components={components}
+              onProjectUpdated={(updated) => setProject(updated)}
+            />
+          )}
+        </motion.div>
+      </AnimatePresence>
     </AppShell>
   );
 }

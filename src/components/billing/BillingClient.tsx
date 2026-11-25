@@ -2,8 +2,10 @@
 
 import {
   AlertCircle,
+  ArrowLeft,
   Check,
   CheckCircle2,
+  ChevronRight,
   Crown,
   KeyRound,
   Lock,
@@ -13,6 +15,7 @@ import {
   UserPlus,
   Users,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
@@ -27,6 +30,8 @@ import {
 } from '@/core/schemas';
 import type { AuthUserProfile } from '@/core/types';
 import { AppShell } from '@/components/layout/AppShell';
+import { StaggerGrid, StaggerItem } from '@/components/motion/MotionPrimitives';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { HttpError } from '@/lib/http/basicGet';
 import { authPetitions, billingPetitions } from '@/services/client/petitions';
 
@@ -44,6 +49,9 @@ export function BillingClient() {
   const [inviteRole, setInviteRole] = useState<UserRole>('Revisor QA');
   const [isInviting, setIsInviting] = useState(false);
   const [removingEmail, setRemovingEmail] = useState<string | null>(null);
+  const [pendingRemoveEmail, setPendingRemoveEmail] = useState<string | null>(
+    null,
+  );
 
   const [wlEnabled, setWlEnabled] = useState(false);
   const [wlBrandName, setWlBrandName] = useState('');
@@ -146,13 +154,16 @@ export function BillingClient() {
     }
   }
 
-  async function handleRemoveMember(correo: string) {
+  async function handleConfirmRemoveMember() {
+    if (!pendingRemoveEmail) return;
+    const correo = pendingRemoveEmail;
     setRemovingEmail(correo);
     setErrorMessage(null);
     setStatusMessage(null);
     try {
       const res = await billingPetitions.manageTeam.remove(correo);
       setUser(res.user);
+      setPendingRemoveEmail(null);
       setStatusMessage(`Miembro ${correo} removido del equipo.`);
     } catch (err: unknown) {
       setErrorMessage(
@@ -247,14 +258,37 @@ export function BillingClient() {
 
   return (
     <AppShell user={user}>
-      <div className="mb-6">
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-docuflow-navy">
-          <Crown className="h-5 w-5 text-docuflow-violet" />
-          <span>Planes, Suscripción, Equipo y Marca Blanca</span>
-        </h1>
-        <p className="mt-1 text-sm text-docuflow-slate">
-          Cambia de nivel en vivo para probar cuotas, desbloqueo de PDF/IEEE 830, eliminación de anuncios, RBAC y White-Label.
-        </p>
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-4 flex items-center gap-1.5 text-xs font-medium text-docuflow-slate"
+      >
+        <Link href="/dashboard" className="hover:text-docuflow-primary">
+          Dashboard
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span className="font-semibold text-docuflow-navy">
+          Planes y Equipo
+        </span>
+      </nav>
+
+      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-docuflow-navy">
+            <Crown className="h-5 w-5 text-docuflow-violet" />
+            <span>Planes, Suscripción, Equipo y Marca Blanca</span>
+          </h1>
+          <p className="mt-1 text-sm text-docuflow-slate">
+            Cambia de nivel en vivo para probar cuotas, desbloqueo de PDF/IEEE 830, eliminación de anuncios, RBAC y White-Label.
+          </p>
+        </div>
+
+        <Link
+          href="/dashboard"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-docuflow-input bg-docuflow-surface px-4 py-2 text-xs font-semibold text-docuflow-navy hover:bg-docuflow-input"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Volver al Dashboard</span>
+        </Link>
       </div>
 
       {statusMessage ? (
@@ -275,15 +309,15 @@ export function BillingClient() {
       ) : null}
 
       {/* 4 Comparative Plans Grid */}
-      <section className="mb-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <StaggerGrid className="mb-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         {plans.map((plan) => {
           const isCurrent = user.plan.nombre === plan.nombre;
           const isSwitching = switchingPlan === plan.nombre;
 
           return (
-            <div
+            <StaggerItem
               key={plan.nombre}
-              className={`flex flex-col justify-between rounded-2xl border p-6 shadow-sm transition-all ${
+              className={`flex flex-col justify-between rounded-2xl border p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
                 isCurrent
                   ? 'border-docuflow-primary bg-docuflow-surface ring-2 ring-docuflow-primary/20'
                   : 'border-docuflow-input bg-docuflow-surface'
@@ -362,7 +396,7 @@ export function BillingClient() {
                 type="button"
                 disabled={isCurrent || switchingPlan !== null}
                 onClick={() => void handlePlanChange(plan.nombre)}
-                className={`mt-6 w-full rounded-xl px-4 py-2.5 text-xs font-semibold transition-colors ${
+                className={`mt-6 w-full rounded-xl px-4 py-2.5 text-xs font-semibold transition-all active:scale-[0.98] ${
                   isCurrent
                     ? 'cursor-default bg-docuflow-input text-docuflow-slate'
                     : 'bg-docuflow-primary text-white hover:bg-docuflow-action disabled:opacity-60'
@@ -374,10 +408,10 @@ export function BillingClient() {
                     ? 'Cambiando plan...'
                     : `Cambiar a ${plan.nombre}`}
               </button>
-            </div>
+            </StaggerItem>
           );
         })}
-      </section>
+      </StaggerGrid>
 
       {/* Team Management + Enterprise White-Label */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -462,7 +496,7 @@ export function BillingClient() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => void handleRemoveMember(member.correo)}
+                    onClick={() => setPendingRemoveEmail(member.correo)}
                     disabled={removingEmail === member.correo}
                     className="inline-flex items-center gap-1 rounded-lg border border-docuflow-input px-2.5 py-1 text-[11px] font-semibold text-docuflow-slate hover:border-docuflow-orange hover:text-docuflow-orange"
                   >
@@ -600,6 +634,20 @@ export function BillingClient() {
           )}
         </section>
       </div>
+
+      <ConfirmDialog
+        open={pendingRemoveEmail !== null}
+        title="Remover miembro del equipo"
+        description={
+          pendingRemoveEmail
+            ? `¿Deseas revocar el acceso de ${pendingRemoveEmail} a tu equipo? Siempre podrás volver a invitarlo más adelante.`
+            : ''
+        }
+        confirmLabel="Sí, remover miembro"
+        isLoading={removingEmail !== null}
+        onConfirm={() => void handleConfirmRemoveMember()}
+        onCancel={() => !removingEmail && setPendingRemoveEmail(null)}
+      />
     </AppShell>
   );
 }

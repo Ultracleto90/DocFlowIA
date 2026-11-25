@@ -3,7 +3,9 @@
 import {
   Activity,
   AlertCircle,
+  ArrowLeft,
   CheckCircle2,
+  ChevronRight,
   Database,
   ExternalLink,
   FileWarning,
@@ -17,6 +19,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { AuditResult } from '@/core/constants/plans';
 import type { AdminAuditResponseDTO, AuthUserProfile } from '@/core/types';
 import { AppShell } from '@/components/layout/AppShell';
+import { StaggerGrid, StaggerItem } from '@/components/motion/MotionPrimitives';
 import { HttpError } from '@/lib/http/basicGet';
 import { auditPetitions, authPetitions } from '@/services/client/petitions';
 
@@ -95,6 +98,19 @@ export function AuditClient() {
 
   return (
     <AppShell user={user}>
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-4 flex items-center gap-1.5 text-xs font-medium text-docuflow-slate"
+      >
+        <Link href="/dashboard" className="hover:text-docuflow-primary">
+          Dashboard
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span className="font-semibold text-docuflow-navy">
+          Bitácora QA
+        </span>
+      </nav>
+
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-docuflow-navy">
@@ -106,15 +122,25 @@ export function AuditClient() {
           </p>
         </div>
 
-        <div className="inline-flex items-center gap-2 rounded-xl border border-docuflow-cyan/50 bg-docuflow-surface px-4 py-2 text-xs font-bold text-docuflow-navy shadow-sm">
-          <Database className="h-4 w-4 text-docuflow-cyan" />
-          <span>
-            Conexión activa:{' '}
-            <code className="font-mono text-docuflow-primary">
-              {report?.metrics.db_account ?? 'auditor_qa_docuflow'}
-            </code>{' '}
-            ({report?.metrics.db_privilege ?? 'read'}-only)
-          </span>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex items-center gap-2 rounded-xl border border-docuflow-cyan/50 bg-docuflow-surface px-4 py-2 text-xs font-bold text-docuflow-navy shadow-sm">
+            <Database className="h-4 w-4 text-docuflow-cyan" />
+            <span>
+              Conexión activa:{' '}
+              <code className="font-mono text-docuflow-primary">
+                {report?.metrics.db_account ?? 'auditor_qa_docuflow'}
+              </code>{' '}
+              ({report?.metrics.db_privilege ?? 'read'}-only)
+            </span>
+          </div>
+
+          <Link
+            href="/dashboard"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-docuflow-input bg-docuflow-surface px-4 py-2 text-xs font-semibold text-docuflow-navy hover:bg-docuflow-input"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Volver al Dashboard</span>
+          </Link>
         </div>
       </div>
 
@@ -131,8 +157,8 @@ export function AuditClient() {
       {report ? (
         <>
           {/* Metrics Cards */}
-          <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
+          <StaggerGrid className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StaggerItem className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate">
                 <Activity className="h-4 w-4 text-docuflow-primary" />
                 <span>Eventos en Bitácora</span>
@@ -140,8 +166,8 @@ export function AuditClient() {
               <p className="mt-2 text-2xl font-extrabold text-docuflow-navy">
                 {report.metrics.total_logs}
               </p>
-            </div>
-            <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
+            </StaggerItem>
+            <StaggerItem className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate">
                 <CheckCircle2 className="h-4 w-4 text-docuflow-cyan" />
                 <span>Eventos EXITOSO</span>
@@ -149,8 +175,8 @@ export function AuditClient() {
               <p className="mt-2 text-2xl font-extrabold text-docuflow-cyan">
                 {report.metrics.exitosos}
               </p>
-            </div>
-            <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
+            </StaggerItem>
+            <StaggerItem className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate">
                 <ShieldAlert className="h-4 w-4 text-docuflow-orange" />
                 <span>BLOQUEADO_UNAUTHORIZED</span>
@@ -158,8 +184,8 @@ export function AuditClient() {
               <p className="mt-2 text-2xl font-extrabold text-docuflow-orange">
                 {report.metrics.bloqueados}
               </p>
-            </div>
-            <div className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm">
+            </StaggerItem>
+            <StaggerItem className="rounded-2xl border border-docuflow-input bg-docuflow-surface p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate">
                 <FileWarning className="h-4 w-4 text-docuflow-violet" />
                 <span>Borradores &gt; 1,200 tokens</span>
@@ -170,8 +196,8 @@ export function AuditClient() {
               <p className="mt-0.5 text-[11px] text-docuflow-slate">
                 {report.metrics.total_high_token_sum.toLocaleString()} tokens acumulados
               </p>
-            </div>
-          </section>
+            </StaggerItem>
+          </StaggerGrid>
 
           {/* Audit Logs Table */}
           <section className="mb-8 overflow-hidden rounded-2xl border border-docuflow-input bg-docuflow-surface shadow-sm">

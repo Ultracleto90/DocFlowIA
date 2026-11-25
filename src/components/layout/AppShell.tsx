@@ -3,7 +3,7 @@
 import {
   Cpu,
   CreditCard,
-  Layers,
+  Home,
   LayoutDashboard,
   LogOut,
   ShieldAlert,
@@ -12,6 +12,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import type { AuthUserProfile } from '@/core/types';
+import { BrandLogo } from '@/components/ui/BrandLogo';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { authPetitions } from '@/services/client/petitions';
 
 interface AppShellProps {
@@ -24,14 +26,8 @@ export function AppShell({ user, children }: AppShellProps) {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
 
-  const isWhiteLabel =
-    user.plan.nombre === 'Enterprise' &&
-    Boolean(user.white_label?.enabled) &&
-    Boolean(user.white_label?.brand_name?.trim());
-
-  const brandTitle = isWhiteLabel
-    ? user.white_label!.brand_name
-    : 'DocuFlow AI';
+  const enterpriseWhiteLabel =
+    user.plan.nombre === 'Enterprise' ? user.white_label : null;
 
   const canSeeAudit =
     user.rol === 'Administrador' || user.plan.nombre === 'Enterprise';
@@ -75,19 +71,13 @@ export function AppShell({ user, children }: AppShellProps) {
   return (
     <div className="flex min-h-screen bg-docuflow-bg text-docuflow-navy">
       {/* Sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-docuflow-input bg-docuflow-surface md:flex">
-        <div className="flex h-16 items-center gap-3 border-b border-docuflow-input px-6">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-docuflow-primary text-white shadow-sm">
-            <Layers className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-docuflow-navy">
-              {brandTitle}
-            </p>
-            <p className="text-[11px] font-medium text-docuflow-slate">
-              {isWhiteLabel ? 'Enterprise White-Label' : 'Laravel Docs SaaS'}
-            </p>
-          </div>
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-docuflow-border/80 bg-docuflow-surface md:flex">
+        <div className="flex h-16 items-center border-b border-docuflow-border/80 px-5">
+          <BrandLogo
+            href="/dashboard"
+            subtitle="Laravel Docs SaaS"
+            whiteLabel={enterpriseWhiteLabel}
+          />
         </div>
 
         <nav className="flex-1 space-y-1.5 px-4 py-5">
@@ -116,8 +106,16 @@ export function AppShell({ user, children }: AppShellProps) {
           })}
         </nav>
 
-        <div className="border-t border-docuflow-input p-4">
-          <div className="rounded-xl bg-docuflow-bg/70 p-3.5">
+        <div className="space-y-3 border-t border-docuflow-border/80 p-4">
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-docuflow-slate transition-colors hover:bg-docuflow-input hover:text-docuflow-navy"
+          >
+            <Home className="h-3.5 w-3.5" />
+            <span>Ver inicio (Landing)</span>
+          </Link>
+
+          <div className="rounded-xl border border-docuflow-border/60 bg-docuflow-elevated/70 p-3.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-docuflow-slate">
                 Plan Activo
@@ -145,20 +143,33 @@ export function AppShell({ user, children }: AppShellProps) {
 
       {/* Main Content */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-docuflow-input bg-docuflow-surface px-4 sm:px-8">
+        <header className="flex h-16 items-center justify-between border-b border-docuflow-border/80 bg-docuflow-surface px-4 sm:px-8">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-2 text-sm font-bold text-docuflow-navy md:hidden">
-              <Layers className="h-4 w-4 text-docuflow-primary" />
-              {brandTitle}
-            </span>
-            <span className="hidden items-center gap-2 rounded-full bg-docuflow-input px-3 py-1 text-xs font-semibold text-docuflow-primary sm:inline-flex">
+            <div className="md:hidden">
+              <BrandLogo
+                href="/dashboard"
+                size="sm"
+                whiteLabel={enterpriseWhiteLabel}
+              />
+            </div>
+            <span className="hidden items-center gap-2 rounded-full border border-docuflow-border/70 bg-docuflow-elevated px-3 py-1 text-xs font-semibold text-docuflow-primary sm:inline-flex">
               <span className="h-2 w-2 rounded-full bg-docuflow-cyan" />
               Human-in-the-loop | SVM + {user.plan_details.nivel_ia}
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-docuflow-border px-2.5 py-1.5 text-xs font-medium text-docuflow-slate hover:bg-docuflow-input hover:text-docuflow-navy md:hidden"
+            >
+              <Home className="h-3.5 w-3.5" />
+              <span>Inicio</span>
+            </Link>
+
+            <ThemeToggle />
+
+            <div className="hidden text-right sm:block">
               <p className="text-xs font-semibold text-docuflow-navy">
                 {user.nombre}
               </p>
@@ -171,10 +182,12 @@ export function AppShell({ user, children }: AppShellProps) {
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-docuflow-input bg-docuflow-surface px-3 py-1.5 text-xs font-semibold text-docuflow-navy transition-colors hover:bg-docuflow-input disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-docuflow-border bg-docuflow-surface px-3 py-2 text-xs font-semibold text-docuflow-navy transition-all hover:bg-docuflow-input active:scale-[0.98] disabled:opacity-60"
             >
               <LogOut className="h-3.5 w-3.5 text-docuflow-slate" />
-              <span>{loggingOut ? 'Saliendo...' : 'Cerrar sesión'}</span>
+              <span className="hidden sm:inline">
+                {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
+              </span>
             </button>
           </div>
         </header>

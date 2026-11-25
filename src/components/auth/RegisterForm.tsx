@@ -2,6 +2,7 @@
 
 import {
   AlertCircle,
+  ArrowLeft,
   CheckCircle2,
   Lock,
   Mail,
@@ -12,6 +13,8 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { BrandLogo } from '@/components/ui/BrandLogo';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { registerSchema } from '@/core/schemas';
 import type { AuthUserProfile } from '@/core/types';
 import { HttpError } from '@/lib/http/basicGet';
@@ -68,13 +71,28 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="w-full max-w-md rounded-2xl border border-docuflow-input bg-docuflow-surface p-8 shadow-sm">
+    <div className="w-full max-w-md rounded-2xl border border-docuflow-border bg-docuflow-surface p-8 shadow-xl">
+      <div className="mb-6 flex items-center justify-between gap-2">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-docuflow-slate transition-colors hover:text-docuflow-primary"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Volver al inicio</span>
+        </Link>
+
+        <ThemeToggle />
+      </div>
+
       <div className="mb-6">
-        <span className="inline-flex items-center gap-2 rounded-full bg-docuflow-violet/10 px-3 py-1 text-xs font-semibold text-docuflow-violet">
-          <Sparkles className="h-3.5 w-3.5" />
-          <span>Plan Freemium Explorer | $0 MXN</span>
-        </span>
-        <h1 className="mt-3 text-2xl font-bold text-docuflow-navy">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <BrandLogo href="/" size="sm" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-docuflow-violet/15 px-3 py-1 text-[11px] font-semibold text-docuflow-violet">
+            <Sparkles className="h-3 w-3" />
+            <span>Freemium | $0 MXN</span>
+          </span>
+        </div>
+        <h1 className="mt-4 font-display text-2xl font-bold text-docuflow-navy">
           Crear cuenta en DocuFlow AI
         </h1>
         <p className="mt-1 text-sm text-docuflow-slate">
@@ -181,7 +199,7 @@ export function RegisterForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-docuflow-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-docuflow-action disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-docuflow-primary px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-docuflow-action active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <UserPlus className="h-4 w-4" />
           <span>{isSubmitting ? 'Creando cuenta...' : 'Registrarme gratis'}</span>

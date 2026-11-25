@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import {
   AlertCircle,
   CheckCircle2,
@@ -9,6 +10,7 @@ import {
   FileDown,
   FileText,
   Lock,
+  RotateCcw,
   Save,
   Sparkles,
 } from 'lucide-react';
@@ -103,6 +105,13 @@ export function DocumentSplitEditor({
     } finally {
       setIsSaving(false);
     }
+  }
+
+  function handleDiscardChanges() {
+    if (!activeDoc) return;
+    setDraftMarkdown(activeDoc.contenido_markdown);
+    setErrorMessage(null);
+    setStatusMessage('Cambios descartados. Se restauró la última versión guardada.');
   }
 
   async function handleToggleValidation() {
@@ -205,31 +214,40 @@ export function DocumentSplitEditor({
               key={tipo}
               type="button"
               onClick={() => setSelectedType(tipo)}
-              className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-colors ${
+              className={`relative flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all active:scale-[0.98] ${
                 isSelected
-                  ? 'border-docuflow-primary bg-docuflow-primary text-white shadow-sm'
+                  ? 'border-docuflow-primary text-white'
                   : 'border-docuflow-input bg-docuflow-surface text-docuflow-navy hover:bg-docuflow-input'
               }`}
             >
-              {!unlocked ? (
-                <Lock className="h-3.5 w-3.5 text-docuflow-orange" />
-              ) : (
-                <FileText className="h-3.5 w-3.5" />
-              )}
-              <span>{tipo}</span>
-              {matchingDoc ? (
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                    matchingDoc.estado_auditoria === 'validado_humano'
-                      ? 'bg-docuflow-cyan/25 text-docuflow-cyan'
-                      : 'bg-docuflow-orange/20 text-docuflow-orange'
-                  }`}
-                >
-                  {matchingDoc.estado_auditoria === 'validado_humano'
-                    ? 'Validado'
-                    : 'Borrador'}
-                </span>
+              {isSelected ? (
+                <motion.span
+                  layoutId="workspaceActiveDoc"
+                  transition={{ type: 'spring', stiffness: 440, damping: 34 }}
+                  className="absolute inset-0 rounded-xl bg-docuflow-primary shadow-sm"
+                />
               ) : null}
+              <span className="relative z-10 flex items-center gap-2">
+                {!unlocked ? (
+                  <Lock className="h-3.5 w-3.5 text-docuflow-orange" />
+                ) : (
+                  <FileText className="h-3.5 w-3.5" />
+                )}
+                <span>{tipo}</span>
+                {matchingDoc ? (
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      matchingDoc.estado_auditoria === 'validado_humano'
+                        ? 'bg-docuflow-cyan/25 text-docuflow-cyan'
+                        : 'bg-docuflow-orange/20 text-docuflow-orange'
+                    }`}
+                  >
+                    {matchingDoc.estado_auditoria === 'validado_humano'
+                      ? 'Validado'
+                      : 'Borrador'}
+                  </span>
+                ) : null}
+              </span>
             </button>
           );
         })}
@@ -294,9 +312,19 @@ export function DocumentSplitEditor({
             <div className="flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
+                onClick={handleDiscardChanges}
+                disabled={isSaving || !hasUnsavedChanges}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-docuflow-input bg-docuflow-surface px-3.5 py-2 text-xs font-semibold text-docuflow-slate transition-colors hover:bg-docuflow-input hover:text-docuflow-navy disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span>Descartar cambios</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => void handleSaveChanges()}
                 disabled={isSaving || !hasUnsavedChanges}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-docuflow-primary px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-docuflow-action disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-docuflow-primary px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-docuflow-action active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Save className="h-3.5 w-3.5" />
                 <span>{isSaving ? 'Guardando...' : 'Guardar cambios'}</span>
@@ -306,18 +334,22 @@ export function DocumentSplitEditor({
                 type="button"
                 onClick={() => void handleToggleValidation()}
                 disabled={isValidating}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all active:scale-[0.98] disabled:opacity-50 ${
                   activeDoc.estado_auditoria === 'validado_humano'
-                    ? 'border border-docuflow-cyan bg-docuflow-cyan/15 text-docuflow-navy'
-                    : 'bg-docuflow-cyan text-docuflow-navy hover:opacity-90'
+                    ? 'border border-docuflow-cyan bg-docuflow-cyan/15 text-docuflow-navy hover:bg-docuflow-cyan/25'
+                    : 'bg-docuflow-cyan text-slate-950 hover:opacity-90'
                 }`}
               >
-                <CheckCircle2 className="h-3.5 w-3.5" />
+                {activeDoc.estado_auditoria === 'validado_humano' ? (
+                  <RotateCcw className="h-3.5 w-3.5" />
+                ) : (
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                )}
                 <span>
                   {isValidating
                     ? 'Actualizando...'
                     : activeDoc.estado_auditoria === 'validado_humano'
-                      ? 'Validado (volver a borrador)'
+                      ? 'Reabrir como borrador (borrador_ia)'
                       : 'Marcar como Validado (validado_humano)'}
                 </span>
               </button>

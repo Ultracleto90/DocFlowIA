@@ -1,5 +1,6 @@
 'use client';
 
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   FileArchive,
@@ -8,12 +9,14 @@ import {
   UploadCloud,
   X,
 } from 'lucide-react';
-import { useCallback, useRef, useState, type DragEvent, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type DragEvent, type FormEvent } from 'react';
 import { createProjectMetaSchema } from '@/core/schemas';
 import type { AuthUserProfile, CreateProjectResponseDTO } from '@/core/types';
 import { HttpError } from '@/lib/http/basicGet';
 import { projectPetitions } from '@/services/client/petitions';
 import { FreemiumInterstitialModal } from './FreemiumInterstitialModal';
+
+const MODAL_EASE = [0.22, 1, 0.36, 1] as const;
 
 interface UploadProjectModalProps {
   open: boolean;
@@ -75,9 +78,20 @@ export function UploadProjectModal({
     }
   }, [framework, nombreProyecto, onClose, onSuccess, selectedFile]);
 
-  if (!open) {
-    return null;
-  }
+  useEffect(() => {
+    if (!open || showInterstitial || isUploading) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, showInterstitial, isUploading, onClose]);
 
   function handleFilePicked(file: File | undefined) {
     setErrorMessage(null);
@@ -139,157 +153,173 @@ export function UploadProjectModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 flex items-center justify-center bg-docuflow-navy/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-xl rounded-2xl border border-docuflow-input bg-docuflow-surface p-6 shadow-xl">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="flex items-center gap-2 text-xl font-bold text-docuflow-navy">
-                <FileArchive className="h-5 w-5 text-docuflow-primary" />
-                <span>Nuevo Proyecto Laravel (.zip)</span>
-              </h2>
-              <p className="mt-1 text-xs text-docuflow-slate">
-                Límites de tu plan <strong>{user.plan.nombre}</strong>: hasta{' '}
-                {user.plan_details.max_zip_mb} MB y {user.plan_details.max_vistas_blade} vistas{' '}
-                <code>.blade.php</code>.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isUploading}
-              aria-label="Cerrar modal"
-              className="rounded-lg p-1.5 text-docuflow-slate hover:bg-docuflow-input hover:text-docuflow-navy"
+      <AnimatePresence>
+        {open ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
+            className="fixed inset-0 z-40 flex items-center justify-center bg-docuflow-navy/60 p-4 backdrop-blur-[2px]"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={{ duration: 0.18, ease: MODAL_EASE }}
+              className="w-full max-w-xl rounded-2xl border border-docuflow-input bg-docuflow-surface p-6 shadow-xl"
             >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          {errorMessage ? (
-            <div
-              role="alert"
-              className="mt-4 flex items-center gap-2 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-3 text-sm text-docuflow-navy"
-            >
-              <AlertCircle className="h-4 w-4 shrink-0 text-docuflow-orange" />
-              <span>{errorMessage}</span>
-            </div>
-          ) : null}
-
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="project-name"
-                  className="block text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
-                >
-                  Nombre del proyecto
-                </label>
-                <input
-                  id="project-name"
-                  type="text"
-                  value={nombreProyecto}
-                  onChange={(e) => setNombreProyecto(e.target.value)}
-                  placeholder="Ej. Sistema CRM Ventas"
-                  disabled={isUploading}
-                  className="mt-1.5 w-full rounded-xl border border-transparent bg-docuflow-input px-4 py-2.5 text-sm text-docuflow-navy focus:border-docuflow-action focus:bg-docuflow-surface focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="project-framework"
-                  className="block text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
-                >
-                  Versión Laravel
-                </label>
-                <select
-                  id="project-framework"
-                  value={framework}
-                  onChange={(e) => setFramework(e.target.value)}
-                  disabled={isUploading}
-                  className="mt-1.5 w-full rounded-xl border border-transparent bg-docuflow-input px-4 py-2.5 text-sm text-docuflow-navy focus:border-docuflow-action focus:bg-docuflow-surface focus:outline-none"
-                >
-                  {FRAMEWORKS.map((fw) => (
-                    <option key={fw} value={fw}>
-                      {fw}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => !isUploading && fileInputRef.current?.click()}
-              className={`cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-colors ${
-                isDragging
-                  ? 'border-docuflow-cyan bg-docuflow-cyan/10'
-                  : 'border-docuflow-input bg-docuflow-bg/40 hover:border-docuflow-action'
-              }`}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".zip,application/zip"
-                onChange={(e) => handleFilePicked(e.target.files?.[0])}
-                className="hidden"
-              />
-              <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-docuflow-surface text-docuflow-primary shadow-sm">
-                <UploadCloud className="h-5 w-5" />
-              </div>
-              {selectedFile ? (
+              <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-docuflow-primary">
-                    {selectedFile.name}
-                  </p>
+                  <h2 className="flex items-center gap-2 text-xl font-bold text-docuflow-navy">
+                    <FileArchive className="h-5 w-5 text-docuflow-primary" />
+                    <span>Nuevo Proyecto Laravel (.zip)</span>
+                  </h2>
                   <p className="mt-1 text-xs text-docuflow-slate">
-                    {(selectedFile.size / 1024).toFixed(1)} KB | Listo para filtro SVM
+                    Límites de tu plan <strong>{user.plan.nombre}</strong>: hasta{' '}
+                    {user.plan_details.max_zip_mb} MB y {user.plan_details.max_vistas_blade} vistas{' '}
+                    <code>.blade.php</code>.
                   </p>
                 </div>
-              ) : (
-                <div>
-                  <p className="text-sm font-semibold text-docuflow-navy">
-                    Arrastra tu archivo <span className="text-docuflow-action">.zip</span> aquí
-                  </p>
-                  <p className="mt-1 text-xs text-docuflow-slate">
-                    o haz clic para seleccionarlo (inspección real de vistas .blade.php)
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {isUploading && pipelinePhase ? (
-              <div className="flex items-center gap-3 rounded-xl bg-docuflow-cyan/10 px-4 py-3 text-xs font-semibold text-docuflow-navy">
-                <Loader2 className="h-4 w-4 animate-spin text-docuflow-cyan" />
-                <span>{pipelinePhase}</span>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={isUploading}
+                  aria-label="Cerrar modal"
+                  className="rounded-lg p-1.5 text-docuflow-slate transition-colors hover:bg-docuflow-input hover:text-docuflow-navy"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-            ) : null}
 
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={isUploading}
-                className="rounded-xl border border-docuflow-input px-4 py-2 text-xs font-semibold text-docuflow-slate hover:bg-docuflow-input disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isUploading}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-docuflow-primary px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-docuflow-action disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Sparkles className="h-4 w-4" />
-                <span>{isUploading ? 'Procesando .zip...' : 'Procesar .zip con SVM + IA'}</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+              {errorMessage ? (
+                <div
+                  role="alert"
+                  className="mt-4 flex items-center gap-2 rounded-xl border border-docuflow-orange/40 bg-docuflow-orange/10 px-4 py-3 text-sm text-docuflow-navy"
+                >
+                  <AlertCircle className="h-4 w-4 shrink-0 text-docuflow-orange" />
+                  <span>{errorMessage}</span>
+                </div>
+              ) : null}
+
+              <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="project-name"
+                      className="block text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
+                    >
+                      Nombre del proyecto
+                    </label>
+                    <input
+                      id="project-name"
+                      type="text"
+                      value={nombreProyecto}
+                      onChange={(e) => setNombreProyecto(e.target.value)}
+                      placeholder="Ej. Sistema CRM Ventas"
+                      disabled={isUploading}
+                      className="mt-1.5 w-full rounded-xl border border-transparent bg-docuflow-input px-4 py-2.5 text-sm text-docuflow-navy focus:border-docuflow-action focus:bg-docuflow-surface focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="project-framework"
+                      className="block text-xs font-semibold uppercase tracking-wide text-docuflow-slate"
+                    >
+                      Versión Laravel
+                    </label>
+                    <select
+                      id="project-framework"
+                      value={framework}
+                      onChange={(e) => setFramework(e.target.value)}
+                      disabled={isUploading}
+                      className="mt-1.5 w-full rounded-xl border border-transparent bg-docuflow-input px-4 py-2.5 text-sm text-docuflow-navy focus:border-docuflow-action focus:bg-docuflow-surface focus:outline-none"
+                    >
+                      {FRAMEWORKS.map((fw) => (
+                        <option key={fw} value={fw}>
+                          {fw}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={handleDrop}
+                  onClick={() => !isUploading && fileInputRef.current?.click()}
+                  className={`cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-colors ${
+                    isDragging
+                      ? 'border-docuflow-cyan bg-docuflow-cyan/10'
+                      : 'border-docuflow-input bg-docuflow-bg/40 hover:border-docuflow-action'
+                  }`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".zip,application/zip"
+                    onChange={(e) => handleFilePicked(e.target.files?.[0])}
+                    className="hidden"
+                  />
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-docuflow-surface text-docuflow-primary shadow-sm">
+                    <UploadCloud className="h-5 w-5" />
+                  </div>
+                  {selectedFile ? (
+                    <div>
+                      <p className="text-sm font-semibold text-docuflow-primary">
+                        {selectedFile.name}
+                      </p>
+                      <p className="mt-1 text-xs text-docuflow-slate">
+                        {(selectedFile.size / 1024).toFixed(1)} KB | Listo para filtro SVM
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm font-semibold text-docuflow-navy">
+                        Arrastra tu archivo <span className="text-docuflow-action">.zip</span> aquí
+                      </p>
+                      <p className="mt-1 text-xs text-docuflow-slate">
+                        o haz clic para seleccionarlo (inspección real de vistas .blade.php)
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {isUploading && pipelinePhase ? (
+                  <div className="flex items-center gap-3 rounded-xl bg-docuflow-cyan/10 px-4 py-3 text-xs font-semibold text-docuflow-navy">
+                    <Loader2 className="h-4 w-4 animate-spin text-docuflow-cyan" />
+                    <span>{pipelinePhase}</span>
+                  </div>
+                ) : null}
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    disabled={isUploading}
+                    className="rounded-xl border border-docuflow-input px-4 py-2 text-xs font-semibold text-docuflow-slate transition-all hover:bg-docuflow-input active:scale-[0.98] disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUploading}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-docuflow-primary px-5 py-2.5 text-xs font-semibold text-white transition-all hover:bg-docuflow-action active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    <span>{isUploading ? 'Procesando .zip...' : 'Procesar .zip con SVM + IA'}</span>
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <FreemiumInterstitialModal
         open={showInterstitial}
