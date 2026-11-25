@@ -31,3 +31,9 @@ Antes de implementar cualquier módulo, consulta:
 - `docs/agent/02-DATABASE-PLANS.md`
 - `docs/agent/03-API-AND-LAYERS.md`
 - `docs/agent/04-UI-AND-SPRINTS.md`
+
+## 5. Skills de Diseño UI/UX (Lectura Obligatoria antes de editar Frontend)
+Antes de crear o rediseñar cualquier vista o componente en `src/app/` o `src/components/`, lee y aplica las instrucciones de:
+- **`.agents/skills/frontend-design/`**: Dirección visual intencional, tipografía, jerarquía y layout.
+- **`.agents/skills/taste-skill/`**: Criterio estético anti-genérico (cero tarjetas repetitivas ni layouts cliché de IA), manteniendo siempre nuestra paleta `docuflow`.
+- **`.agents/skills/scroll-craft/`**: Aplicar **ÚNICAMENTE** en la Landing Page pública (`src/app/page.tsx`) para narrativa visual al hacer scroll. **NO** usar animaciones pesadas de scroll dentro del Dashboard, Workspace, Billing ni Auditoría.
